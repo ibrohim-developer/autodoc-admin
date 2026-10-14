@@ -15,9 +15,9 @@ job applications, and see site statistics. Based on the spec «ТЗ: админ-
 | 3 | Content screens and site wiring: news, vacancies, projects, pages, site texts, settings, redirects | 16–20 days | **In progress** — all but Projects done (2026-10-14) |
 | 4 | Forms: form submissions and job applications, resumes, Telegram, Excel | 7–9 days | **Admin side done** (2026-10-14); site wiring left |
 | 5 | Cookie banner, tracking codes, own statistics, start-screen widgets | 9–11 days | **Admin side done** (2026-10-14); banner and script on the site left |
-| 6 | Audit log screen, data retention, backups and restore test | 3–4 days | Planned |
-| 7 | hh.uz import | 3–4 days | Planned |
-| 8 | Hardening: browser tests of key flows, security pass, docs | 6–8 days | Planned |
+| 6 | Audit log screen, data retention, backups and restore test | 3–4 days | **Done** (2026-10-14) |
+| 7 | hh.uz import | 3–4 days | **Done** (2026-10-14); needs the hh application token |
+| 8 | Hardening: browser tests of key flows, security pass, docs | 6–8 days | **Done** for the admin (2026-10-14); repeat on the site once it is wired |
 | | **Total** | **~65–81 days (≈3–4 months, one developer)** | |
 
 ## Decisions
@@ -228,7 +228,7 @@ history, scheduling, unsaved-changes warning, Ctrl+S.
   (Accept all / Reject / Configure, texts in the message files), loading the counters after
   consent, and the statistics script.
 
-## Stage 6 — Audit log screen, retention, backups
+## Stage 6 — Audit log screen, retention, backups (done)
 
 | Data | Kept |
 |---|---|
@@ -240,18 +240,48 @@ history, scheduling, unsaved-changes warning, Ctrl+S.
 | Statistics events | 13 months |
 | Backups | 14 daily + 8 weekly; restore tested monthly |
 
-## Stage 7 — hh.uz import
+- **Журнал действий** (administrator only): every action in Russian, filters by section,
+  user, text or object id and period; each entry opens to IP, browser and what changed
+  (status from → to…), with a link to the object.
+- **Retention:** a nightly job (04:00 Tashkent) deletes for good what is past the periods
+  above, resumes with their applications; a run that removed something is logged with the
+  counts. Trash, versions, form limits and statistics salts keep their own cleanups.
+- **Restore test:** `deploy/restore-test.sh`, monthly from cron, restores the newest dump into
+  a scratch database, compares row counts with the live one, checks the files archive and
+  drops the scratch database.
+- **Checked:** e2e tests for the filters, permissions and every retention period (resume
+  files included); the restore script run against a real Postgres.
 
-- Anonymous access to hh vacancies returns 403 (checked 2026-10-13): the company's hh.uz employer
-  account must register an app at dev.hh.ru and get an application token.
-- Hourly sync of the company's vacancies; new ones arrive as drafts (auto-publish is a switch),
-  closed on hh → closed on the site, HR's edits can be protected from sync.
+## Stage 7 — hh.uz import (done; needs the token)
+
+- Anonymous access to hh vacancies returns 403 (checked 2026-10-13): the company's hh.uz
+  employer account must register an app at dev.hh.ru and get an application token. It goes
+  into **Интеграции → hh.uz** with the employer id and the direction for new vacancies.
+- **Hourly sync:** new open vacancies arrive as drafts (or live with "Публиковать новые
+  сразу"); the hh text goes into Uzbek and Russian, the description into the editor's format,
+  key skills into requirements. Changes on hh follow at the same address; closed on hh →
+  closed on the site, back on hh → reopened.
+- **HR's edits win:** once an imported vacancy is edited in the admin, the sync leaves its
+  text alone and only opens or closes it. A vacancy deleted in the admin is not brought back.
+  Unpublished changes are never published by the sync.
+- The sync acts as a system account «hh.uz» (shown as the author in history), which can't log
+  in and isn't listed among users. The last run's result is on the Интеграции card, with
+  "Синхронизировать сейчас"; runs that change something, and failures when they start, are
+  in the audit log.
 - Not included: importing responses from hh (needs paid employer API access).
+- **Checked:** e2e tests against a fake hh API (create, update, close, reopen, protected
+  edits, trash, 403 from hh); the HTML conversion unit-tested.
 
-## Stage 8 — Hardening
+## Stage 8 — Hardening (done for the admin)
 
-Browser tests of the key flows for each role, a security pass (sign-in, uploads, headers),
-final documentation.
+- **Browser tests** (`dashboard/e2e`, Playwright, `pnpm --filter @autodoc/dashboard e2e`, a
+  `browser` job in GitLab CI): marketing's and HR's menus and the "Нет доступа" pages, login
+  with 2FA and with a wrong password, a submission taken into work with a comment, a resume
+  downloaded, an application deleted and restored from the trash.
+- **Security pass:** [SECURITY.md](SECURITY.md). Every admin route swept for 401 without a
+  session, private storage unreachable, headers checked; added `Cache-Control: no-store` for
+  admin answers and a `Permissions-Policy`; `pnpm audit` clean.
+- **Left:** the same pass on the site once it posts the forms and loads the counters.
 
 ## What the business needs to provide
 

@@ -16,6 +16,8 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // A Chromium already on the machine (a container image) instead of Playwright's download.
+    launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined },
   },
 
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

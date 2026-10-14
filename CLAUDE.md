@@ -102,6 +102,18 @@ names arrive garbled.
 **Files from the API go through `requestFile()` + `saveFile()`** in the dashboard
 (`lib/api-client.ts`), never a bare link: the session refresh and errors work the same.
 
+**System accounts** (`@system.autodoc.uz`, e.g. the hh.uz import) are users so history and
+the audit log have an author; they are inactive, have no password, and `UsersService` hides
+them. `DocumentsService` methods take `req` as optional for such callers.
+
+**hh.uz sync and HR's edits:** an imported vacancy keeps `shared.hh = { id, hash }`; the hash
+covers what the sync writes (`contentHash`), so a mismatch means someone edited it here and the
+text is left alone. The dashboard's vacancy form passes `shared.hh` through unchanged.
+
+**Playwright specs fake the API with `page.route`** on a predicate for paths starting with
+`/api/` — a glob like `**/api/**` also catches Vite's source files in `features/*/api/`.
+`PLAYWRIGHT_CHROMIUM_PATH` points at a browser already on the machine.
+
 ## Commits
 
 Never add Claude as author or co-author (no `Co-Authored-By` / `Claude-Session` trailers):
