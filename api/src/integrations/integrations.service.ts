@@ -43,6 +43,59 @@ export type TelegramChanges = {
   applicationsChatId?: string | null
 }
 
+const HH_KEY = 'hh'
+const HH_STATUS_KEY = 'hh_status'
+
+/** The hh.uz import (src/hh). The application token is encrypted like the bot token. */
+type StoredHh = {
+  enabled: boolean
+  /** The company's employer id on hh: the number in hh.uz/employer/<id>. */
+  employerId: string | null
+  tokenEnc: string | null
+  /** New vacancies need a direction; HR moves them to the right one later. */
+  directionId: string | null
+  /** New vacancies go live at once instead of waiting as drafts. */
+  autoPublish: boolean
+}
+
+export type HhConfig = Omit<StoredHh, 'tokenEnc'> & { token: string | null }
+
+/** One sync: when, how it went, what it changed. */
+export type HhRun = {
+  at: string
+  ok: boolean
+  error: string | null
+  created: number
+  updated: number
+  closed: number
+  reopened: number
+  /** Edited in the admin: their text is left alone. */
+  protected: number
+  failed: number
+}
+
+export type HhView = Omit<StoredHh, 'tokenEnc'> & {
+  hasToken: boolean
+  updatedAt: Date | null
+  lastRun: HhRun | null
+}
+
+export type HhChanges = {
+  enabled?: boolean
+  employerId?: string | null
+  token?: string
+  directionId?: string | null
+  autoPublish?: boolean
+}
+
+const EMPTY_HH: StoredHh = {
+  enabled: false,
+  employerId: null,
+  tokenEnc: null,
+  directionId: null,
+  autoPublish: false,
+}
+
 const EMPTY: StoredTelegram = {
   enabled: false,
   tokenEnc: null,
@@ -125,6 +178,80 @@ export class IntegrationsService {
       req,
     })
     return this.telegramView()
+  }
+
+  // ── hh.uz ─────────────────────────────────────────────────────────────────
+
+  async hh(): Promise<HhConfig> {
+    const { stored } = await this.storedHh()
+    let token: string | null = null
+    if (stored.tokenEnc) {
+      try {
+        token = decrypt(stored.tokenEnc, this.key)
+      } catch {
+        token = null
+      }
+    }
+    const { tokenEnc: _secret, ...rest } = stored
+    return { ...rest, token }
+  }
+
+  async hhView(): Promise<HhView> {
+    const { stored, updatedAt } = await this.storedHh()
+    const status = await this.settings.findOneBy({ key: HH_STATUS_KEY })
+    const { tokenEnc, ...rest } = stored
+    return {
+      ...rest,
+      hasToken: Boolean(tokenEnc),
+      updatedAt,
+      lastRun: (status?.value as HhRun | undefined) ?? null,
+    }
+  }
+
+  async updateHh(changes: HhChanges, actor: AuthUser, req: Request): Promise<HhView> {
+    const { stored } = await this.storedHh()
+    const next: StoredHh = { ...stored }
+    if (changes.enabled !== undefined) next.enabled = changes.enabled
+    if (changes.autoPublish !== undefined) next.autoPublish = changes.autoPublish
+    if (changes.employerId !== undefined) next.employerId = changes.employerId?.trim() || null
+    if (changes.directionId !== undefined) next.directionId = changes.directionId || null
+    if (changes.token !== undefined) {
+      const token = changes.token.trim()
+      next.tokenEnc = token ? encrypt(token, this.key) : null
+    }
+    await this.settings.save(
+      this.settings.create({ key: HH_KEY, value: next, updatedBy: actor.id }),
+    )
+    await this.audit.record({
+      action: 'integrations.hh.update',
+      user: actor,
+      entityType: 'integration',
+      entityId: HH_KEY,
+      meta: {
+        changed: Object.keys(changes).filter(
+          (key) => changes[key as keyof HhChanges] !== undefined,
+        ),
+      },
+      req,
+    })
+    return this.hhView()
+  }
+
+  async saveHhRun(run: HhRun): Promise<void> {
+    await this.settings.save(this.settings.create({ key: HH_STATUS_KEY, value: run }))
+  }
+
+  async lastHhRun(): Promise<HhRun | null> {
+    const row = await this.settings.findOneBy({ key: HH_STATUS_KEY })
+    return (row?.value as HhRun | undefined) ?? null
+  }
+
+  private async storedHh(): Promise<{ stored: StoredHh; updatedAt: Date | null }> {
+    const row = await this.settings.findOneBy({ key: HH_KEY })
+    return {
+      stored: { ...EMPTY_HH, ...(row?.value as Partial<StoredHh> | undefined) },
+      updatedAt: row?.updatedAt ?? null,
+    }
   }
 
   private async storedTelegram(): Promise<{ stored: StoredTelegram; updatedAt: Date | null }> {

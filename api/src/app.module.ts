@@ -18,6 +18,7 @@ import { ContentTypesModule } from './content/content-types.module.js'
 import { typeOrmOptions } from './database/typeorm.config.js'
 import { FormsModule } from './forms/forms.module.js'
 import { HealthController } from './health/health.controller.js'
+import { HhModule } from './hh/hh.module.js'
 import { HomeModule } from './home/home.module.js'
 import { IntegrationsModule } from './integrations/integrations.module.js'
 import { MediaModule } from './media/media.module.js'
@@ -103,6 +104,7 @@ const isTest = process.env.NODE_ENV === 'test'
     StatsModule,
     HomeModule,
     RetentionModule,
+    HhModule,
     TrashModule,
   ],
   controllers: [HealthController],

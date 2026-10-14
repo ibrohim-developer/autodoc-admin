@@ -23,6 +23,13 @@ import type { CreateUserDto, UpdateUserDto } from './users.dto.js'
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const RESET_TTL_MS = 24 * 60 * 60 * 1000
 
+/** Accounts that only the API uses, as the author of what it does: never able to log in. */
+export const SYSTEM_EMAIL_DOMAIN = '@system.autodoc.uz'
+
+export function isSystemEmail(email: string): boolean {
+  return email.endsWith(SYSTEM_EMAIL_DOMAIN)
+}
+
 export type UserStatus = 'active' | 'invited' | 'disabled'
 
 export type UserView = {
@@ -105,7 +112,8 @@ export class UsersService {
 
   async list(): Promise<UserView[]> {
     const rows = await this.users.find({ order: { createdAt: 'ASC' } })
-    return rows.map(toUserView)
+    // Accounts the API itself acts as (the hh.uz import) are not people to manage.
+    return rows.filter((row) => !isSystemEmail(row.email)).map(toUserView)
   }
 
   async create(
@@ -305,7 +313,8 @@ export class UsersService {
   /** Marketing manages marketing and HR accounts; only an administrator touches administrators. */
   private async getManageable(id: string, actor: AuthUser): Promise<User> {
     const user = await this.users.findOneBy({ id })
-    if (!user)
+    // System accounts are not in the list and can't be switched on or given a password.
+    if (!user || isSystemEmail(user.email))
       throw new NotFoundException({ code: 'user_not_found', message: 'Пользователь не найден' })
     if (user.role === 'admin' && actor.role !== 'admin') {
       throw new ForbiddenException({

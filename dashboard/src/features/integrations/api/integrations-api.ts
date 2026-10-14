@@ -42,3 +42,55 @@ export function testTelegram() {
     schema: z.object({ leads: resultSchema, applications: resultSchema }),
   })
 }
+
+const hhRunSchema = z.object({
+  at: z.string(),
+  ok: z.boolean(),
+  error: z.string().nullable(),
+  created: z.number(),
+  updated: z.number(),
+  closed: z.number(),
+  reopened: z.number(),
+  protected: z.number(),
+  failed: z.number(),
+})
+export type HhRun = z.infer<typeof hhRunSchema>
+
+export const hhSchema = z.object({
+  enabled: z.boolean(),
+  employerId: z.string().nullable(),
+  directionId: z.string().nullable(),
+  autoPublish: z.boolean(),
+  hasToken: z.boolean(),
+  updatedAt: z.string().nullable(),
+  lastRun: hhRunSchema.nullable(),
+})
+export type Hh = z.infer<typeof hhSchema>
+
+export type HhChanges = {
+  enabled?: boolean
+  employerId?: string | null
+  token?: string
+  directionId?: string | null
+  autoPublish?: boolean
+}
+
+export function fetchHh() {
+  return request('admin/integrations/hh', { schema: hhSchema })
+}
+
+export function updateHh(changes: HhChanges) {
+  return request('admin/integrations/hh', { method: 'PUT', body: changes, schema: hhSchema })
+}
+
+export function syncHh() {
+  return request('admin/integrations/hh/sync', { method: 'POST', schema: hhRunSchema })
+}
+
+/** Directions to put new vacancies in (the vacancy_direction content type). */
+export function fetchDirections() {
+  return request('admin/content', {
+    schema: z.object({ items: z.array(z.object({ id: z.string(), title: z.string() })) }),
+    searchParams: { type: 'vacancy_direction', pageSize: 100 },
+  })
+}

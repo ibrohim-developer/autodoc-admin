@@ -76,6 +76,12 @@ export function VacancySidebar({ doc }: EditorContext) {
         <CardDescription>Одинаково для всех языков.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        {doc?.data.shared.hh ? (
+          <p className="rounded-lg bg-muted px-3 py-2 text-muted-foreground text-sm">
+            Импортирована с hh.uz. Пока её не правят здесь, текст обновляется с hh каждый час; после
+            правки — только открывается и закрывается вместе с hh.
+          </p>
+        ) : null}
         <SelectField
           name="shared.directionId"
           label="Направление"

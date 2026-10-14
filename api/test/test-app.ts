@@ -44,6 +44,7 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<T
     // Nothing listens here unless a test passes its own fake site.
     SITE_INTERNAL_URL: 'http://127.0.0.1:9',
     TELEGRAM_API_URL: 'http://127.0.0.1:9',
+    HH_API_URL: 'http://127.0.0.1:9',
     SITE_API_TOKEN,
     REVALIDATE_SECRET,
     PREVIEW_SECRET,

@@ -10,6 +10,6 @@ import { TelegramService } from './telegram.service.js'
   imports: [TypeOrmModule.forFeature([AppSetting]), AuditModule],
   controllers: [IntegrationsController],
   providers: [IntegrationsService, TelegramService],
-  exports: [TelegramService],
+  exports: [TelegramService, IntegrationsService],
 })
 export class IntegrationsModule {}

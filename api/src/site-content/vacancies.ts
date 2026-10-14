@@ -37,6 +37,14 @@ export const vacancyType: ContentTypeDef = {
     directionId: z.uuid({ message: 'Выберите направление' }),
     employment: z.enum(EMPLOYMENT, { message: 'Выберите занятость' }),
     closed: z.boolean().optional(),
+    /**
+     * Imported from hh.uz (src/hh): the vacancy's id there and a hash of what the sync last
+     * wrote. When the content no longer matches the hash, someone edited it here and the sync
+     * stops changing its text.
+     */
+    hh: z
+      .object({ id: z.string().regex(/^\d{1,20}$/), hash: z.string().regex(/^[0-9a-f]{64}$/) })
+      .optional(),
   }),
   localized: z.object({
     title: requiredText(120, 'Укажите название'),
@@ -57,7 +65,7 @@ export const vacancyType: ContentTypeDef = {
   slug: (data) => String(data.shared.slug || data.locales.uz.title || ''),
   sitePath: (_data, slug, locale) => (slug ? localePath(locale, `/vacancies/${slug}/`) : null),
   summary: {
-    shared: ['directionId', 'employment', 'closed'],
+    shared: ['directionId', 'employment', 'closed', 'hh'],
     localized: ['title', 'city', 'description', 'requirements'],
   },
   references: [{ field: 'directionId', type: 'vacancy_direction', label: 'Направление' }],
