@@ -409,6 +409,15 @@ export class ApplicationsService {
     return this.views(await this.applications.find({ order: { createdAt: 'DESC' }, take: limit }))
   }
 
+  /** Applications in a period, the trash included (statistics). */
+  countBetween(start: Date, end: Date): Promise<number> {
+    return this.applications
+      .createQueryBuilder('a')
+      .withDeleted()
+      .where('a.created_at >= :start AND a.created_at < :end', { start, end })
+      .getCount()
+  }
+
   /** Applications in a period per vacancy (null: no particular one), the trash included. */
   async countByVacancy(start: Date, end: Date): Promise<Map<string | null, number>> {
     const rows: { vacancy_id: string | null; count: string }[] = await this.applications.query(

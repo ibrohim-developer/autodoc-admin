@@ -69,7 +69,7 @@ export async function resetDatabase(app: NestExpressApplication): Promise<void> 
   await app
     .get(DataSource)
     .query(
-      'TRUNCATE users, refresh_tokens, password_tokens, audit_log, documents, document_versions, media, media_usages, leads, applications, form_hits, app_settings RESTART IDENTITY CASCADE',
+      'TRUNCATE users, refresh_tokens, password_tokens, audit_log, documents, document_versions, media, media_usages, leads, applications, form_hits, app_settings, stats_views, stats_salts RESTART IDENTITY CASCADE',
     )
 }
 

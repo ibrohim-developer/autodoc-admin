@@ -108,6 +108,37 @@ describe('pages, settings and legal pages', () => {
     expect(twice.body.issues[0].message).toBe('Пункт меню дважды')
   })
 
+  it('keeps the tracking codes the cookie banner loads', async () => {
+    const settings = (tracking: Record<string, string>) => ({
+      type: 'site_settings',
+      data: {
+        shared: {
+          phone: '+998 55 505 75 75',
+          email: 'info@autodoc.uz',
+          socials: { linkedin: '', instagram: '' },
+          map: { lat: 41.3203, lon: 69.2673 },
+          menu: [],
+          tracking,
+        },
+        locales: { uz: {} },
+      },
+    })
+    const bad = await marketing
+      .post('/api/admin/content')
+      .send(settings({ ga4: 'UA-12345-1', metrica: '', pixel: '' }))
+      .expect(400)
+    expect(bad.body.issues[0]).toMatchObject({
+      path: 'shared.tracking.ga4',
+      message: 'Идентификатор GA4 выглядит так: G-XXXXXXXXXX',
+    })
+    await marketing
+      .post('/api/admin/content')
+      .send(settings({ ga4: 'G-ABC123DEF4', metrica: '98765432', pixel: '' }))
+      .expect(201)
+    const live = await single('site_settings').expect(200)
+    expect(live.body.data.tracking).toEqual({ ga4: 'G-ABC123DEF4', metrica: '98765432', pixel: '' })
+  })
+
   it('previews the privacy policy at its address', async () => {
     const created = await marketing
       .post('/api/admin/content')

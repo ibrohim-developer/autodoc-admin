@@ -9,9 +9,10 @@ import type { Request } from 'express'
 import type { Env } from '../config/env.js'
 
 /**
- * The site's forms post from the site itself (nginx routes autodoc.uz/api/v1/… here). A
- * browser always names the page's origin on a cross-site POST, so another site's form is
- * refused; no Origin at all (curl, a test) is let through to the limits and checks.
+ * The site's forms and statistics post from visitors' browsers (nginx routes
+ * autodoc.uz/api/v1/… here). A browser always names the page's origin on a cross-site POST, so
+ * another site's form is refused; no Origin at all (curl, a test) is let through to the limits
+ * and checks.
  */
 @Injectable()
 export class SiteOriginGuard implements CanActivate {

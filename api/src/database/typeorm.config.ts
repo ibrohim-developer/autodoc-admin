@@ -13,6 +13,7 @@ import { User } from '../users/user.entity.js'
 import { InitAuth1791849600000 } from './migrations/1791849600000-init-auth.js'
 import { ContentCore1791853200000 } from './migrations/1791853200000-content-core.js'
 import { Forms1791856800000 } from './migrations/1791856800000-forms.js'
+import { Stats1791860400000 } from './migrations/1791860400000-stats.js'
 
 /**
  * Entities and migrations are listed explicitly rather than globbed: ESM has no
@@ -36,7 +37,12 @@ export const ENTITIES = [
   AppSetting,
 ]
 
-export const MIGRATIONS = [InitAuth1791849600000, ContentCore1791853200000, Forms1791856800000]
+export const MIGRATIONS = [
+  InitAuth1791849600000,
+  ContentCore1791853200000,
+  Forms1791856800000,
+  Stats1791860400000,
+]
 
 export function typeOrmOptions(databaseUrl: string): DataSourceOptions {
   return {
