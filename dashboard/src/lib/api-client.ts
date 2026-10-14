@@ -102,6 +102,67 @@ function refreshSession(): Promise<boolean> {
   return refreshing
 }
 
+/** The file name from `Content-Disposition`, preferring the UTF-8 `filename*`. */
+function fileNameOf(header: string | null, fallback: string): string {
+  if (!header) return fallback
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header)?.[1]
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded)
+    } catch {
+      // Fall through to the plain name.
+    }
+  }
+  return /filename="([^"]+)"/i.exec(header)?.[1] ?? fallback
+}
+
+/**
+ * A file from the API (an Excel export, a resume), with the same session refresh and errors as
+ * `request()`. Returns the file; `saveFile` hands it to the browser.
+ */
+export async function requestFile(
+  path: string,
+  {
+    searchParams,
+    fallbackName = 'file',
+  }: {
+    searchParams?: Record<string, string | number | boolean | undefined>
+    fallbackName?: string
+  } = {},
+): Promise<{ blob: Blob; name: string }> {
+  const url = apiUrl(path)
+  for (const [key, value] of Object.entries(searchParams ?? {})) {
+    if (value !== undefined && value !== '') url.searchParams.set(key, String(value))
+  }
+  const send = () => fetch(url, { headers: { Accept: '*/*' } })
+  let response = await send()
+  if (response.status === 401 && (await refreshSession())) response = await send()
+  if (!response.ok) {
+    throw new ApiError(
+      `${response.status} ${response.statusText} — ${url.pathname}`,
+      response.status,
+      parseBody(await response.text()),
+    )
+  }
+  return {
+    blob: await response.blob(),
+    name: fileNameOf(response.headers.get('content-disposition'), fallbackName),
+  }
+}
+
+/** Starts the browser's download of a file fetched with `requestFile`. */
+export function saveFile({ blob, name }: { blob: Blob; name: string }): void {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name
+  document.body.append(link)
+  link.click()
+  link.remove()
+  // Some browsers start the download asynchronously.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
+
 /**
  * `fetch` with the things every call needs: the API base path, typed errors,
  * a silent session refresh, and runtime validation of the response.

@@ -55,6 +55,29 @@ function SettingsFields() {
       </Card>
       <Card>
         <CardHeader>
+          <CardTitle>Счётчики и пиксели</CardTitle>
+          <CardDescription>
+            Сайт подключает их только после того, как посетитель согласится на cookies в баннере.
+            Пустое поле — счётчик не используется. Собственная статистика админки работает и без
+            них.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-5 sm:grid-cols-3">
+          <TextField
+            name="shared.tracking.ga4"
+            label="Google Analytics 4"
+            placeholder="G-XXXXXXXXXX"
+          />
+          <TextField name="shared.tracking.metrica" label="Яндекс Метрика" placeholder="98765432" />
+          <TextField
+            name="shared.tracking.pixel"
+            label="Meta Pixel"
+            placeholder="1234567890123456"
+          />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle>Офис на карте</CardTitle>
           <CardDescription>
             Точка на карте страницы «Контакты». Координаты можно скопировать из Яндекс или Google

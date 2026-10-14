@@ -14,9 +14,11 @@ function useTrashMutation(mutationFn: typeof restoreItem) {
     mutationFn,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: trashKeys.all })
-      // A restored photo is back in the library; restored documents are back in their lists.
+      // Whatever comes back (a photo, a document, a submission, an application) is in its list again.
       void queryClient.invalidateQueries({ queryKey: mediaKeys.all })
       void queryClient.invalidateQueries({ queryKey: ['content'] })
+      void queryClient.invalidateQueries({ queryKey: ['leads'] })
+      void queryClient.invalidateQueries({ queryKey: ['applications'] })
     },
   })
 }

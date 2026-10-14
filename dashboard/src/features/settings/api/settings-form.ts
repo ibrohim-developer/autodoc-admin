@@ -1,6 +1,6 @@
 import type { DocumentData } from '@/lib/content'
 
-/** "Настройки сайта": contacts, social links, the map pin, the menu. Rules: api/src/site-content/pages.ts. */
+/** "Настройки сайта": contacts, social links, the map pin, the menu, the tracking codes. Rules: api/src/site-content/pages.ts. */
 
 /** The menu items the site has, as they are named there (labels are in "Тексты сайта" → Меню). */
 export const NAV_ITEMS = [
@@ -24,6 +24,8 @@ export type SettingsForm = {
     socials: { linkedin: string; instagram: string }
     map: { lat: number | undefined; lon: number | undefined }
     menu: MenuItem[]
+    /** Loaded by the site only after the visitor accepts cookies. Empty = not used. */
+    tracking: { ga4: string; metrica: string; pixel: string }
   }
   locales: { uz: Record<string, never> }
 }
@@ -40,6 +42,7 @@ export function defaultSettings(): SettingsForm {
       },
       map: { lat: 41.3203, lon: 69.2673 },
       menu: NAV_ITEMS.map((item) => ({ key: item.key, visible: true })),
+      tracking: { ga4: '', metrica: '', pixel: '' },
     },
     locales: { uz: {} },
   }
@@ -52,6 +55,7 @@ export function settingsFromData(data: DocumentData): SettingsForm {
   const shared = data.shared
   const socials = (shared.socials ?? {}) as Record<string, unknown>
   const map = (shared.map ?? {}) as Record<string, unknown>
+  const tracking = (shared.tracking ?? {}) as Record<string, unknown>
   const saved = (Array.isArray(shared.menu) ? shared.menu : []) as MenuItem[]
   const known = NAV_ITEMS.map((item) => item.key) as string[]
   // Items the site gained since the last save appear at the end, shown.
@@ -75,6 +79,11 @@ export function settingsFromData(data: DocumentData): SettingsForm {
         lon: typeof map.lon === 'number' ? map.lon : defaults.map.lon,
       },
       menu,
+      tracking: {
+        ga4: text(tracking.ga4, ''),
+        metrica: text(tracking.metrica, ''),
+        pixel: text(tracking.pixel, ''),
+      },
     },
     locales: { uz: {} },
   }
@@ -92,6 +101,11 @@ export function settingsToData(values: SettingsForm): DocumentData {
       },
       map: { lat: shared.map.lat, lon: shared.map.lon },
       menu: shared.menu,
+      tracking: {
+        ga4: shared.tracking.ga4.trim().toUpperCase(),
+        metrica: shared.tracking.metrica.trim(),
+        pixel: shared.tracking.pixel.trim(),
+      },
     },
     locales: { uz: {} },
   }
