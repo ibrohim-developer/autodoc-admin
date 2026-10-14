@@ -1,0 +1,157 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind v4 has no tailwind.config.js — dark mode is declared here.
+   Class-based so the theme store can drive it from JS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens. Everything below is referenced as `bg-background`,
+   `text-muted-foreground`, `rounded-lg`, etc. Primary is the Autodoc brand
+   green from the public site (#2f8a3d; #57b13c in dark mode). */
+@theme {
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.22 0.02 130);
+
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.22 0.02 130);
+
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.22 0.02 130);
+
+  --color-primary: oklch(0.56 0.13 146);
+  --color-primary-foreground: oklch(0.99 0 0);
+
+  --color-secondary: oklch(0.967 0.003 130);
+  --color-secondary-foreground: oklch(0.22 0.02 130);
+
+  --color-muted: oklch(0.967 0.003 130);
+  --color-muted-foreground: oklch(0.52 0.01 130);
+
+  --color-accent: oklch(0.955 0.02 146);
+  --color-accent-foreground: oklch(0.3 0.06 146);
+
+  --color-destructive: oklch(0.58 0.22 27);
+  --color-destructive-foreground: oklch(0.99 0 0);
+
+  --color-border: oklch(0.92 0.005 130);
+  --color-input: oklch(0.92 0.005 130);
+  --color-ring: oklch(0.56 0.13 146);
+
+  --radius: 0.625rem;
+}
+
+.dark {
+  --color-background: oklch(0.18 0.01 130);
+  --color-foreground: oklch(0.97 0.005 130);
+
+  --color-card: oklch(0.22 0.01 130);
+  --color-card-foreground: oklch(0.97 0.005 130);
+
+  --color-popover: oklch(0.22 0.01 130);
+  --color-popover-foreground: oklch(0.97 0.005 130);
+
+  --color-primary: oklch(0.69 0.16 138);
+  --color-primary-foreground: oklch(0.18 0.02 140);
+
+  --color-secondary: oklch(0.27 0.01 130);
+  --color-secondary-foreground: oklch(0.97 0.005 130);
+
+  --color-muted: oklch(0.27 0.01 130);
+  --color-muted-foreground: oklch(0.72 0.01 130);
+
+  --color-accent: oklch(0.3 0.04 146);
+  --color-accent-foreground: oklch(0.95 0.03 146);
+
+  --color-destructive: oklch(0.65 0.2 27);
+  --color-destructive-foreground: oklch(0.99 0 0);
+
+  --color-border: oklch(0.32 0.01 130);
+  --color-input: oklch(0.32 0.01 130);
+  --color-ring: oklch(0.69 0.16 138);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* Respect users who ask for less motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Text inside the rich-text editor. Close to the site's article style, so editors see roughly
+   what visitors will. */
+@layer components {
+  .rich-text {
+    line-height: 1.6;
+  }
+  .rich-text > * + * {
+    margin-top: 0.75em;
+  }
+  .rich-text h2 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 1.25em;
+  }
+  .rich-text h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin-top: 1em;
+  }
+  .rich-text ul {
+    list-style: disc;
+    padding-left: 1.5em;
+  }
+  .rich-text ol {
+    list-style: decimal;
+    padding-left: 1.5em;
+  }
+  .rich-text li > p {
+    margin: 0.15em 0;
+  }
+  .rich-text blockquote {
+    border-left: 3px solid var(--color-primary);
+    padding-left: 1em;
+    color: var(--color-muted-foreground);
+  }
+  .rich-text a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .rich-text hr {
+    border-top: 1px solid var(--color-border);
+    margin: 1.5em 0;
+  }
+  .rich-text img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+  .rich-text img.ProseMirror-selectednode {
+    outline: 3px solid var(--color-ring);
+  }
+  .rich-text p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: var(--color-muted-foreground);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+}

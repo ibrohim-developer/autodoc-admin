@@ -1,0 +1,47 @@
+# verify: lint, typecheck and tests on every push and merge request (needs a Docker runner).
+# deploy: on main, SSH to the server and run deploy/deploy.sh, as in portal24.
+#
+# CI/CD variables (Settings → CI/CD → Variables, masked + protected):
+#   RUNNER_KEY            private SSH key of the deploy user
+#   SSH_KNOWN_HOSTS       output of `ssh-keyscan -p <port> <host>` for the server
+#   AUTODOC_HOST, AUTODOC_PORT, AUTODOC_USER
+
+stages:
+  - verify
+  - deploy
+
+verify:
+  stage: verify
+  image: node:22-bookworm
+  # The e2e tests need a real database; embedded Postgres can't run as root in a container.
+  services:
+    - name: postgres:17
+      alias: postgres
+  variables:
+    POSTGRES_DB: autodoc_test
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    E2E_DATABASE_URL: postgres://postgres:postgres@postgres:5432/autodoc_test
+  before_script:
+    - corepack enable
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm lint:ci
+    - pnpm typecheck
+    - pnpm test
+    - pnpm --filter @autodoc/api test:e2e
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+deploy:
+  stage: deploy
+  needs: [verify]
+  script:
+    - install -m 600 /dev/null runner_key && echo "$RUNNER_KEY" > runner_key
+    - echo "$SSH_KNOWN_HOSTS" > known_hosts
+    - ssh -i runner_key -o UserKnownHostsFile=known_hosts -p "$AUTODOC_PORT" "$AUTODOC_USER@$AUTODOC_HOST" "bash /var/www/autodoc-admin/deploy/deploy.sh"
+  after_script:
+    - rm -f runner_key known_hosts
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"

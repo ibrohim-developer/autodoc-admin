@@ -1,0 +1,20 @@
+{
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[css]": { "editor.defaultFormatter": "biomejs.biome" },
+
+  // Tailwind v4 has no config file; point IntelliSense at the CSS entry instead.
+  "tailwindCSS.experimental.configFile": "dashboard/src/styles/index.css",
+  "tailwindCSS.classFunctions": ["cn", "clsx", "cva"]
+
+  // Deliberately no "typescript.tsdk": the dashboard is on TypeScript 7, which ships only
+  // `tsc`, not `tsserver`. VS Code uses its own bundled TypeScript for editing;
+  // `pnpm typecheck` runs each package's real compiler and is the source of truth.
+}

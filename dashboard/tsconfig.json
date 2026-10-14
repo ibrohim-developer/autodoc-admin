@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
+
+    /* Strictness — deliberately tighter than `strict` alone. */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    /* Vite transpiles per-file, so these keep TS honest about what it emits. */
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    /* TS 7 removed `baseUrl` — paths are resolved relative to this file. */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["src", "e2e", "vite.config.ts", "playwright.config.ts"]
+}

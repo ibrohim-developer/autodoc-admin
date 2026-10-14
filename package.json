@@ -1,0 +1,32 @@
+{
+  "name": "autodoc-admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Admin panel for autodoc.uz: NestJS API (api/) and React dashboard (dashboard/).",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev:db": "pnpm --filter @autodoc/api db:dev",
+    "dev:api": "pnpm --filter @autodoc/api start:dev",
+    "dev:dashboard": "pnpm --filter @autodoc/dashboard dev",
+    "build": "pnpm --filter @autodoc/dashboard build && pnpm --filter @autodoc/api build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "lint:ci": "biome ci .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test:run",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,md}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.8",
+    "husky": "9.1.7",
+    "lint-staged": "17.3.0"
+  }
+}
