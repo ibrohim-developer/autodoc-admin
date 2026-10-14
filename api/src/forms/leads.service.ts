@@ -230,6 +230,16 @@ export class LeadsService {
     return rows.length
   }
 
+  /** Retention: submissions untouched since `cutoff` go for good. */
+  async purgeUnchangedSince(cutoff: Date): Promise<number> {
+    const result = await this.leads
+      .createQueryBuilder()
+      .delete()
+      .where('updated_at < :cutoff', { cutoff })
+      .execute()
+    return result.affected ?? 0
+  }
+
   /** For the start screen. */
   async countNew(): Promise<number> {
     return this.leads.countBy({ status: 'new' })

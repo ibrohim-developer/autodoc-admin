@@ -9,9 +9,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { errorMessage } from '@/lib/api-client'
+import { editorPath } from '@/lib/content'
 import { formatDateTime } from '@/lib/format'
 import { useCan, useMe } from '@/lib/session'
-import { editorPath } from '../api/home-api'
 import { useHome } from '../hooks/use-home'
 
 function greeting(): string {

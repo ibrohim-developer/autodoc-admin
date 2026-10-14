@@ -399,6 +399,20 @@ export class ApplicationsService {
     return rows.length
   }
 
+  /** Retention: applications untouched since `cutoff` go for good, resumes with them. */
+  async purgeUnchangedSince(cutoff: Date): Promise<number> {
+    const rows = await this.applications.find({
+      select: { id: true, resumeFile: true },
+      where: { updatedAt: LessThan(cutoff) },
+      withDeleted: true,
+    })
+    for (const row of rows) {
+      await this.deleteResume(row.resumeFile)
+      await this.applications.delete(row.id)
+    }
+    return rows.length
+  }
+
   // ── Start screen and statistics ─────────────────────────────────────────────
 
   countNew(): Promise<number> {

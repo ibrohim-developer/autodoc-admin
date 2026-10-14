@@ -295,3 +295,17 @@ export function toLocales<T extends Record<string, unknown>>(
 export function todayInTashkent(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tashkent' }).format(new Date())
 }
+
+/** Where the dashboard edits a document of this type. */
+export function editorPath(type: string, id: string): string {
+  if (type === 'post') return `/news/${id}`
+  if (type === 'vacancy') return `/vacancies/${id}`
+  if (type.startsWith('legal_')) return `/pages/legal/${type.slice('legal_'.length)}`
+  if (type.startsWith('page_')) return `/pages/${type.slice('page_'.length)}`
+  if (type === 'post_category') return '/news/categories'
+  if (type === 'vacancy_direction') return '/vacancies/directions'
+  if (type === 'redirect') return '/redirects'
+  if (type === 'site_settings') return '/settings'
+  if (type === 'site_texts') return '/texts'
+  return '/'
+}

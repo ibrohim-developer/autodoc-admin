@@ -113,7 +113,7 @@ export const NAV: NavGroup[] = [
         label: 'Журнал действий',
         icon: History,
         permission: 'audit.read',
-        ready: false,
+        ready: true,
       },
       {
         to: '/integrations',

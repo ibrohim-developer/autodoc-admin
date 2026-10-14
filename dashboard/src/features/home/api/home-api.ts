@@ -67,12 +67,3 @@ export type Home = z.infer<typeof homeSchema>
 export function fetchHome() {
   return request('admin/home', { schema: homeSchema })
 }
-
-/** Where the dashboard edits a document of this type. */
-export function editorPath(type: string, id: string): string {
-  if (type === 'post') return `/news/${id}`
-  if (type === 'vacancy') return `/vacancies/${id}`
-  if (type.startsWith('legal_')) return `/pages/legal/${type.slice('legal_'.length)}`
-  if (type.startsWith('page_')) return `/pages/${type.slice('page_'.length)}`
-  return '/'
-}

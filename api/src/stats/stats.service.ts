@@ -172,6 +172,15 @@ export class StatsService {
     }
   }
 
+  /** Retention: page views of days before `day` (YYYY-MM-DD) go. */
+  async purgeBefore(day: string): Promise<number> {
+    const result: [unknown, number] = await this.dataSource.query(
+      `DELETE FROM stats_views WHERE day < $1`,
+      [day],
+    )
+    return result[1] ?? 0
+  }
+
   // ── Reports ─────────────────────────────────────────────────────────────────
 
   /** The last `days` days, today included. */

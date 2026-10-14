@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 // Imported from each feature's barrel, not from a file inside it.
 import { ApplicationPage, ApplicationsPage } from '@/features/applications'
+import { AuditPage } from '@/features/audit'
 import { LoginPage, SetPasswordPage } from '@/features/auth'
 import { HomePage } from '@/features/home'
 import { IntegrationsPage } from '@/features/integrations'
@@ -110,6 +111,14 @@ export const router = createBrowserRouter([
         element: (
           <RequirePermission permission="stats.vacancies">
             <StatsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'audit',
+        element: (
+          <RequirePermission permission="audit.read">
+            <AuditPage />
           </RequirePermission>
         ),
       },

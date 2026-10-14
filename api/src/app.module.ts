@@ -21,6 +21,7 @@ import { HealthController } from './health/health.controller.js'
 import { HomeModule } from './home/home.module.js'
 import { IntegrationsModule } from './integrations/integrations.module.js'
 import { MediaModule } from './media/media.module.js'
+import { RetentionModule } from './retention/retention.module.js'
 import { SiteContentModule } from './site-content/site-content.module.js'
 import { StatsModule } from './stats/stats.module.js'
 import { TrashModule } from './trash/trash.module.js'
@@ -101,6 +102,7 @@ const isTest = process.env.NODE_ENV === 'test'
     FormsModule,
     StatsModule,
     HomeModule,
+    RetentionModule,
     TrashModule,
   ],
   controllers: [HealthController],
