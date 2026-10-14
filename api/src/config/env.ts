@@ -88,6 +88,14 @@ export class Env {
   @IsString()
   @MinLength(32)
   PREVIEW_SECRET: string
+
+  /** Telegram's Bot API. Tests point it at a fake server. */
+  @IsUrl({ require_tld: false, require_protocol: true })
+  TELEGRAM_API_URL = 'https://api.telegram.org'
+
+  /** hh.ru's API, which serves hh.uz too. Tests point it at a fake server. */
+  @IsUrl({ require_tld: false, require_protocol: true })
+  HH_API_URL = 'https://api.hh.ru'
 }
 
 export function validateEnv(config: Record<string, unknown>): Env {

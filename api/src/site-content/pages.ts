@@ -156,7 +156,26 @@ const optionalUrl = z
   )
   .optional()
 
-/** Contacts, social links, the map pin and the menu. Saved = live. */
+/** An id the tracker issues, or empty: GA4 G-XXXXXXX, Yandex Metrica counter, Meta Pixel. */
+const trackingId = (pattern: RegExp, message: string) =>
+  z
+    .string()
+    .trim()
+    .max(40)
+    .refine((value) => value === '' || pattern.test(value), message)
+    .optional()
+
+/**
+ * Counters the site loads only after the visitor accepts cookies (the cookie banner). Empty =
+ * not used. The site's own statistics don't need any of these.
+ */
+export const trackingSchema = z.object({
+  ga4: trackingId(/^G-[A-Z0-9]{4,15}$/, 'Идентификатор GA4 выглядит так: G-XXXXXXXXXX'),
+  metrica: trackingId(/^\d{5,12}$/, 'Номер счётчика Метрики — от 5 до 12 цифр'),
+  pixel: trackingId(/^\d{10,20}$/, 'ID пикселя Meta — от 10 до 20 цифр'),
+})
+
+/** Contacts, social links, the map pin, the menu and the tracking codes. Saved = live. */
 export const siteSettingsType: ContentTypeDef = {
   type: 'site_settings',
   label: 'Настройки сайта',
@@ -183,6 +202,7 @@ export const siteSettingsType: ContentTypeDef = {
         (items) => new Set(items.map((item) => item.key)).size === items.length,
         'Пункт меню дважды',
       ),
+    tracking: trackingSchema.optional(),
   }),
   localized: z.object({}),
   title: () => 'Настройки сайта',

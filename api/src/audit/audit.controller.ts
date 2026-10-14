@@ -1,6 +1,16 @@
 import { Controller, Get, Query } from '@nestjs/common'
 import { Type } from 'class-transformer'
-import { IsDate, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator'
+import {
+  IsDate,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator'
 import { RequirePermission } from '../common/decorators.js'
 import { AuditService } from './audit.service.js'
 
@@ -20,6 +30,16 @@ class AuditQueryDto {
   @IsString()
   @MaxLength(100)
   action?: string
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z_]{1,40}$/)
+  section?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  q?: string
 
   @IsOptional()
   @IsUUID()

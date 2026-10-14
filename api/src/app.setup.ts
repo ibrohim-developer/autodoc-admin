@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import cookieParser from 'cookie-parser'
+import type { NextFunction, Request, Response } from 'express'
 import helmet from 'helmet'
 import { originCheck } from './common/origin-check.js'
 import type { Env } from './config/env.js'
@@ -37,8 +38,20 @@ export function configureApp(app: NestExpressApplication): void {
       strictTransportSecurity: https,
     }),
   )
+  // The browser has no business with camera, microphone or location on any of these pages.
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()')
+    next()
+  })
   app.use(cookieParser())
   app.use('/api/admin', originCheck(config.get('ADMIN_ORIGIN', { infer: true })))
+  // Admin answers carry names, phones and resumes: never kept by the browser or a proxy.
+  // (Express's ETag would also let a shared cache revalidate them.)
+  app.set('etag', false)
+  app.use('/api/admin', (_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Cache-Control', 'no-store')
+    next()
+  })
 
   app.setGlobalPrefix('api')
   app.useGlobalPipes(

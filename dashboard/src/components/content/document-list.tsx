@@ -1,6 +1,7 @@
 import { Plus, Search } from 'lucide-react'
 import { type ReactNode, useDeferredValue, useState } from 'react'
 import { Link } from 'react-router'
+import { Pager } from '@/components/pager'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -188,29 +189,7 @@ export function DocumentList({
         </div>
       ) : null}
 
-      {pages > 1 ? (
-        <div className="flex items-center justify-end gap-2 text-sm">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((current) => current - 1)}
-          >
-            Назад
-          </Button>
-          <span className="text-muted-foreground tabular-nums">
-            {page} из {pages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= pages}
-            onClick={() => setPage((current) => current + 1)}
-          >
-            Дальше
-          </Button>
-        </div>
-      ) : null}
+      <Pager page={page} pages={pages} onChange={setPage} />
     </div>
   )
 }

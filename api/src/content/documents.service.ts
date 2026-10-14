@@ -200,7 +200,7 @@ export class DocumentsService {
     typeName: string,
     input: unknown,
     actor: AuthUser,
-    req: Request,
+    req?: Request,
   ): Promise<DocumentView> {
     const type = this.registry.get(typeName)
     this.assert(actor, type, 'write')
@@ -249,7 +249,7 @@ export class DocumentsService {
     id: string,
     input: { data: unknown; revision: number },
     actor: AuthUser,
-    req: Request,
+    req?: Request,
   ): Promise<DocumentView> {
     const result = await this.dataSource.transaction(async (manager) => {
       const doc = await this.lock(manager, id)
@@ -289,7 +289,7 @@ export class DocumentsService {
     id: string,
     input: { revision?: number },
     actor: AuthUser,
-    req: Request,
+    req?: Request,
   ): Promise<DocumentView> {
     const { doc, type, previousSlug } = await this.dataSource.transaction(async (manager) => {
       const doc = await this.lock(manager, id)
@@ -1075,7 +1075,7 @@ export class DocumentsService {
     type: RegisteredType,
     doc: ContentDocument,
     actor: AuthUser,
-    req: Request,
+    req?: Request,
     extra: { summary?: string } = {},
   ): Promise<void> {
     await this.audit.record({

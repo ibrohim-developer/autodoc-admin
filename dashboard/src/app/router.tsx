@@ -1,18 +1,23 @@
 import { createBrowserRouter } from 'react-router'
 // Imported from each feature's barrel, not from a file inside it.
+import { ApplicationPage, ApplicationsPage } from '@/features/applications'
+import { AuditPage } from '@/features/audit'
 import { LoginPage, SetPasswordPage } from '@/features/auth'
+import { HomePage } from '@/features/home'
+import { IntegrationsPage } from '@/features/integrations'
+import { LeadPage, LeadsPage } from '@/features/leads'
 import { MediaPage } from '@/features/media'
 import { NewsCategoriesPage, NewsEditorPage, NewsListPage } from '@/features/news'
 import { LegalEditorPage, PageEditorPage, PagesListPage } from '@/features/pages'
 import { ProfilePage } from '@/features/profile'
 import { RedirectsPage } from '@/features/redirects'
 import { SettingsPage } from '@/features/settings'
+import { StatsPage } from '@/features/stats'
 import { SiteTextsPage } from '@/features/texts'
 import { TrashPage } from '@/features/trash'
 import { UsersPage } from '@/features/users'
 import { VacanciesListPage, VacancyDirectionsPage, VacancyEditorPage } from '@/features/vacancies'
 import { ErrorPage } from './pages/error-page'
-import { HomePage } from './pages/home-page'
 import { NotFoundPage } from './pages/not-found-page'
 import { RequirePermission, RequireSession } from './require-session'
 
@@ -83,6 +88,47 @@ export const router = createBrowserRouter([
           { path: 'directions', element: <VacancyDirectionsPage /> },
           { path: ':id', element: <VacancyEditorPage /> },
         ],
+      },
+      {
+        path: 'applications',
+        element: <RequirePermission permission="applications.read" />,
+        children: [
+          { index: true, element: <ApplicationsPage /> },
+          { path: ':id', element: <ApplicationPage /> },
+        ],
+      },
+      {
+        path: 'leads',
+        element: <RequirePermission permission="leads.read" />,
+        children: [
+          { index: true, element: <LeadsPage /> },
+          { path: ':id', element: <LeadPage /> },
+        ],
+      },
+      {
+        // HR has only the vacancy tab; the page shows the tabs each role may open.
+        path: 'stats',
+        element: (
+          <RequirePermission permission="stats.vacancies">
+            <StatsPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'audit',
+        element: (
+          <RequirePermission permission="audit.read">
+            <AuditPage />
+          </RequirePermission>
+        ),
+      },
+      {
+        path: 'integrations',
+        element: (
+          <RequirePermission permission="integrations.manage">
+            <IntegrationsPage />
+          </RequirePermission>
+        ),
       },
       {
         path: 'users',

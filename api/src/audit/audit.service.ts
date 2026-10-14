@@ -1,13 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import type { Request } from 'express'
-import {
-  Between,
-  type FindOptionsWhere,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  Repository,
-} from 'typeorm'
+import { Repository } from 'typeorm'
 import { clientMeta } from '../common/request.js'
 import { AuditLog } from './audit-log.entity.js'
 
@@ -27,6 +21,9 @@ export type AuditQuery = {
   page: number
   pageSize: number
   action?: string
+  /** The part before the dot: `leads`, `documents`, `auth`… */
+  section?: string
+  q?: string
   userId?: string
   entityType?: string
   entityId?: string
@@ -66,21 +63,42 @@ export class AuditService {
   }
 
   async list(query: AuditQuery): Promise<{ items: AuditLog[]; total: number }> {
-    const where: FindOptionsWhere<AuditLog> = {}
-    if (query.action) where.action = query.action
-    if (query.userId) where.userId = query.userId
-    if (query.entityType) where.entityType = query.entityType
-    if (query.entityId) where.entityId = query.entityId
-    if (query.from && query.to) where.createdAt = Between(query.from, query.to)
-    else if (query.from) where.createdAt = MoreThanOrEqual(query.from)
-    else if (query.to) where.createdAt = LessThanOrEqual(query.to)
-
-    const [items, total] = await this.entries.findAndCount({
-      where,
-      order: { createdAt: 'DESC', id: 'DESC' },
-      skip: (query.page - 1) * query.pageSize,
-      take: query.pageSize,
-    })
+    const qb = this.entries.createQueryBuilder('a')
+    if (query.action) qb.andWhere('a.action = :action', { action: query.action })
+    // "leads" matches leads.update, leads.export…
+    if (query.section) {
+      qb.andWhere('a.action LIKE :section', {
+        section: `${query.section.replace(/[\\%_]/g, '')}.%`,
+      })
+    }
+    if (query.userId) qb.andWhere('a.user_id = :userId', { userId: query.userId })
+    if (query.entityType)
+      qb.andWhere('a.entity_type = :entityType', { entityType: query.entityType })
+    if (query.entityId) qb.andWhere('a.entity_id = :entityId', { entityId: query.entityId })
+    if (query.from) qb.andWhere('a.created_at >= :from', { from: query.from })
+    if (query.to) qb.andWhere('a.created_at < :to', { to: query.to })
+    if (query.q) {
+      qb.andWhere('(a.summary ILIKE :q OR a.user_email ILIKE :q OR a.entity_id = :exact)', {
+        q: `%${query.q.replace(/[\\%_]/g, (char) => `\\${char}`)}%`,
+        exact: query.q,
+      })
+    }
+    const [items, total] = await qb
+      .orderBy('a.created_at', 'DESC')
+      .addOrderBy('a.id', 'DESC')
+      .skip((query.page - 1) * query.pageSize)
+      .take(query.pageSize)
+      .getManyAndCount()
     return { items, total }
+  }
+
+  /** Entries older than `cutoff` go (retention: 12 months). */
+  async purgeBefore(cutoff: Date): Promise<number> {
+    const result = await this.entries
+      .createQueryBuilder()
+      .delete()
+      .where('created_at < :cutoff', { cutoff })
+      .execute()
+    return result.affected ?? 0
   }
 }

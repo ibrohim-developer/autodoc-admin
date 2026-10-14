@@ -38,6 +38,7 @@ pnpm lint            # Biome, both packages
 pnpm typecheck
 pnpm test            # unit tests (Vitest) in api/ and dashboard/
 pnpm --filter @autodoc/api test:e2e    # API end to end against a throwaway Postgres
+pnpm --filter @autodoc/dashboard e2e   # key flows in a real browser (Playwright, fake API)
 ```
 
 ## Content and the site
@@ -55,6 +56,27 @@ pnpm --filter @autodoc/api test:e2e    # API end to end against a throwaway Post
   the original) in `storage/public/media`, served at `/media/`; the original goes to
   `storage/private`. A photo in use can't be deleted.
 - Deleted items and photos wait 30 days in Корзина; a nightly job removes older ones.
+
+## Forms and statistics
+
+- The site's forms post from the visitor's browser to `POST /api/v1/leads` and
+  `/api/v1/applications`, and its script reports page views to `/api/v1/collect`. Contracts:
+  [docs/site-integration.md](docs/site-integration.md).
+- Resumes are kept in `storage/private/resumes` and only come out through
+  `GET /api/admin/applications/:id/resume` (logged).
+- Telegram alerts: **Интеграции** in the dashboard (bot token, two chats). `TELEGRAM_API_URL`
+  only changes in tests.
+- Statistics keep no cookies and no addresses: see the Stage 5 notes in the roadmap.
+- Retention: a nightly job deletes applications (12 months after the last change), submissions
+  (24), audit entries (12) and statistics (13). `deploy/restore-test.sh` proves the backups
+  restore; run it monthly from cron.
+
+## hh.uz
+
+**Интеграции → hh.uz**: employer id, the application token from dev.hh.ru, the direction for
+new vacancies. Every hour the company's open vacancies come in (drafts unless "Публиковать
+новые сразу"), changes follow, closed ones close. An imported vacancy edited in the admin keeps
+its text. `HH_API_URL` only changes in tests.
 
 The content types are in [`api/src/site-content/`](api/src/site-content/): news and their
 categories, vacancies and directions, site texts, settings, the seven pages, the privacy policy
@@ -90,6 +112,9 @@ same permissions, so a hidden screen also answers 403 when called directly.
 | Audit log, integrations | ✓ | — | — |
 
 ## Security in short
+
+Full list of what was checked: [docs/SECURITY.md](docs/SECURITY.md).
+
 
 - Sessions: 15-minute access token and a rotating 14-day refresh token, both in httpOnly,
   SameSite=Strict cookies. A refresh token presented again after rotation ends that login on

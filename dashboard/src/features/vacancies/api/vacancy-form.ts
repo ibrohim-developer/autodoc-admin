@@ -24,8 +24,20 @@ export type VacancyLocale = {
 }
 
 export type VacancyForm = {
-  shared: { slug: string; directionId: string | null; employment: Employment; closed: boolean }
+  shared: {
+    slug: string
+    directionId: string | null
+    employment: Employment
+    closed: boolean
+    /** Set by the hh.uz import; kept as it is so the sync can tell edits apart. */
+    hh?: { id: string; hash: string }
+  }
   locales: Record<Locale, VacancyLocale>
+}
+
+function isHhRef(value: unknown): value is { id: string; hash: string } {
+  const ref = value as { id?: unknown; hash?: unknown } | null
+  return typeof ref?.id === 'string' && typeof ref.hash === 'string'
 }
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -75,6 +87,7 @@ export function vacancyFromData(data: DocumentData): VacancyForm {
       directionId: typeof shared.directionId === 'string' ? shared.directionId : null,
       employment: employment in EMPLOYMENT ? (employment as Employment) : 'fullTime',
       closed: shared.closed === true,
+      ...(isHhRef(shared.hh) ? { hh: shared.hh } : {}),
     },
     locales: { uz: locale('uz'), ru: locale('ru'), en: locale('en') },
   }
@@ -93,6 +106,7 @@ export function vacancyToData(values: VacancyForm): DocumentData {
       ...(values.shared.directionId ? { directionId: values.shared.directionId } : {}),
       employment: values.shared.employment,
       closed: values.shared.closed,
+      ...(values.shared.hh ? { hh: values.shared.hh } : {}),
     },
     locales: toLocales({
       uz: clean(values.locales.uz),

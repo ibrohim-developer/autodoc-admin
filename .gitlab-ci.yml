@@ -34,9 +34,27 @@ verify:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
 
+# The key flows in a real browser (dashboard/e2e, against an in-memory fake API).
+browser:
+  stage: verify
+  image: mcr.microsoft.com/playwright:v1.62.1-noble
+  before_script:
+    - corepack enable
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm --filter @autodoc/dashboard e2e
+  artifacts:
+    when: on_failure
+    paths:
+      - dashboard/playwright-report/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
 deploy:
   stage: deploy
-  needs: [verify]
+  needs: [verify, browser]
   script:
     - install -m 600 /dev/null runner_key && echo "$RUNNER_KEY" > runner_key
     - echo "$SSH_KNOWN_HOSTS" > known_hosts

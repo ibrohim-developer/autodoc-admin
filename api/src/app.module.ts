@@ -16,9 +16,15 @@ import { type Env, validateEnv } from './config/env.js'
 import { ContentModule } from './content/content.module.js'
 import { ContentTypesModule } from './content/content-types.module.js'
 import { typeOrmOptions } from './database/typeorm.config.js'
+import { FormsModule } from './forms/forms.module.js'
 import { HealthController } from './health/health.controller.js'
+import { HhModule } from './hh/hh.module.js'
+import { HomeModule } from './home/home.module.js'
+import { IntegrationsModule } from './integrations/integrations.module.js'
 import { MediaModule } from './media/media.module.js'
+import { RetentionModule } from './retention/retention.module.js'
 import { SiteContentModule } from './site-content/site-content.module.js'
+import { StatsModule } from './stats/stats.module.js'
 import { TrashModule } from './trash/trash.module.js'
 import { UsersModule } from './users/users.module.js'
 
@@ -80,7 +86,7 @@ const isTest = process.env.NODE_ENV === 'test'
     }),
     // A generous default for the dashboard; sensitive routes set their own limits.
     ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ttl: 60_000, limit: 300 }] }),
-    // Scheduled publishing and the nightly trash cleanup. Tests call those jobs directly.
+    // Scheduled publishing and the nightly cleanups. Tests call those jobs directly.
     ...(isTest ? [] : [ScheduleModule.forRoot()]),
     ServeStaticModule.forRootAsync({
       inject: [ConfigService],
@@ -93,6 +99,12 @@ const isTest = process.env.NODE_ENV === 'test'
     AuthModule,
     MediaModule,
     ContentModule,
+    IntegrationsModule,
+    FormsModule,
+    StatsModule,
+    HomeModule,
+    RetentionModule,
+    HhModule,
     TrashModule,
   ],
   controllers: [HealthController],

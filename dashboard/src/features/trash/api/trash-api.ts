@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { request } from '@/lib/api-client'
 
 export const trashItemSchema = z.object({
-  kind: z.enum(['document', 'media']),
+  kind: z.enum(['document', 'media', 'lead', 'application']),
   id: z.uuid(),
   type: z.string(),
   typeLabel: z.string(),

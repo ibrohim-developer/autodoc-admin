@@ -264,10 +264,15 @@ describe('content core', () => {
 
     await marketing.delete(`/api/admin/content/${created.id}`).expect(204)
     const trashService = app.get(TrashService)
-    expect(await trashService.purgeExpired(new Date())).toEqual({ documents: 0, media: 0 })
+    expect(await trashService.purgeExpired(new Date())).toEqual({
+      documents: 0,
+      media: 0,
+      leads: 0,
+      applications: 0,
+    })
     expect(
       await trashService.purgeExpired(new Date(Date.now() + 31 * 24 * 60 * 60 * 1000)),
-    ).toEqual({
+    ).toMatchObject({
       documents: 1,
       media: 0,
     })

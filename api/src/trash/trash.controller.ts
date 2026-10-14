@@ -14,7 +14,9 @@ import type { AppRequest, AuthUser } from '../common/request.js'
 import { type TrashKind, TrashService } from './trash.service.js'
 
 function kindOf(value: string): TrashKind {
-  if (value === 'document' || value === 'media') return value
+  if (value === 'document' || value === 'media' || value === 'lead' || value === 'application') {
+    return value
+  }
   throw new BadRequestException({ code: 'bad_kind', message: 'Unknown trash kind' })
 }
 

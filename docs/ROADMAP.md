@@ -13,11 +13,11 @@ job applications, and see site statistics. Based on the spec «ТЗ: админ-
 | 1 | Foundations: repo, auth, roles, users, audit log, deploy, site on `next start` | 9–11 days | **Done** (2026-10-13) |
 | 2 | Content core: drafts and publishing, history, trash, scheduling, media library, editor | 12–14 days | **Done** (2026-10-13) |
 | 3 | Content screens and site wiring: news, vacancies, projects, pages, site texts, settings, redirects | 16–20 days | **In progress** — all but Projects done (2026-10-14) |
-| 4 | Forms: form submissions and job applications, resumes, Telegram, Excel | 7–9 days | Planned |
-| 5 | Cookie banner, tracking codes, own statistics, start-screen widgets | 9–11 days | Planned |
-| 6 | Audit log screen, data retention, backups and restore test | 3–4 days | Planned |
-| 7 | hh.uz import | 3–4 days | Planned |
-| 8 | Hardening: browser tests of key flows, security pass, docs | 6–8 days | Planned |
+| 4 | Forms: form submissions and job applications, resumes, Telegram, Excel | 7–9 days | **Admin side done** (2026-10-14); site wiring left |
+| 5 | Cookie banner, tracking codes, own statistics, start-screen widgets | 9–11 days | **Admin side done** (2026-10-14); banner and script on the site left |
+| 6 | Audit log screen, data retention, backups and restore test | 3–4 days | **Done** (2026-10-14) |
+| 7 | hh.uz import | 3–4 days | **Done** (2026-10-14); needs the hh application token |
+| 8 | Hardening: browser tests of key flows, security pass, docs | 6–8 days | **Done** for the admin (2026-10-14); repeat on the site once it is wired |
 | | **Total** | **~65–81 days (≈3–4 months, one developer)** | |
 
 ## Decisions
@@ -178,22 +178,57 @@ history, scheduling, unsaved-changes warning, Ctrl+S.
 3. Deploy the landing's `feat/admin-platform` (merged into main): from then on it reads the
    admin. Its build needs the API running.
 
-## Stage 4 — Forms
+## Stage 4 — Forms (admin side done; the site's forms still to wire)
 
-- Form submissions and job applications land in the admin with status and comment.
-- Resumes: PDF/DOC/DOCX up to 10 MB, checked by content, stored privately, downloadable only by
-  permitted roles (logged).
-- Rate limits (5 per 10 minutes, 20 per day per form and address), honeypot, consent checkbox.
-- Telegram: text only, no personal data. Excel export. Candidate source (site, hh, Instagram…).
+- **Заявки:** submissions of the site's forms (today: «Обратная связь») with status (Новая, В
+  работе, Обработана, Спам) and a comment; tabs with counts, search (name, phone, text, №),
+  period, Excel export, trash.
+- **Отклики:** applications from the resume form, plus candidates HR adds by hand with their
+  source (hh.uz, Instagram, Telegram, LinkedIn, рекомендация, другое). Statuses: Новый, На
+  рассмотрении, Собеседование, Принят, Отказ. Filters by vacancy («другая позиция» too),
+  source, period; Excel export; trash. An application keeps its vacancy's title even after
+  the vacancy is deleted.
+- **Resumes:** PDF/DOC/DOCX up to 10 MB, recognised by content (an HTML file named .pdf, an
+  Excel file or a macro-enabled Word file is refused), stored in `storage/private/resumes`,
+  downloadable only with `applications.read`; each download is in the audit log. Deleted with
+  the application when it leaves the trash.
+- **Public endpoints** `POST /api/v1/leads` and `/api/v1/applications`: 5 per 10 minutes and
+  20 a day per form and address (counted by a keyed hash, kept a day), honeypot field,
+  consent required, other sites' origins refused.
+- **Telegram** (Интеграции, administrator only): bot token stored encrypted and never shown
+  again, a chat for marketing (submissions) and one for HR (applications), "Проверить" sends a
+  test message to each. Alerts carry the number, the form or vacancy and a link — no names,
+  phones or texts.
+- **Checked:** e2e tests for every rule above (limits, honeypot, origin, consent, file
+  checks, vacancy closed, permissions per role, trash with the file, Telegram without
+  personal data), the Excel file opened with a spreadsheet library; in a real browser:
+  lists, cards, status and comment, resume download, export.
+- **Left on the site** ([site-integration.md](site-integration.md)): post the two forms to
+  the API, add the consent checkbox to the resume form, route the endpoints in nginx.
 
-## Stage 5 — Cookies and statistics
+## Stage 5 — Cookies and statistics (admin side done; banner and script on the site left)
 
-- Cookie banner: Accept all / Reject / Configure; GA4, Metrica and Pixel load only after consent.
-- Own statistics without cookies: visitors, views, sources, devices, language, top pages, form
-  submissions; per post views and reading time; per vacancy views → applications.
-- Start-screen widgets for each role.
+- **Own statistics without cookies:** the site's script reports page views and time on page
+  to `/api/v1/collect`. A visitor is a hash of address + browser + a salt that is deleted
+  after the day: visitors are counted per day and can never be followed across days or traced
+  back. Addresses are never stored; bots are skipped.
+- **Статистика**, a tab per permission: *Общая* (visitors, views, time on page with the
+  change against the previous period, visitors per day, sources with top referrers,
+  devices, languages, top pages, submissions and applications), *Новости* (views, readers
+  and reading time per post), *Вакансии* (career page, views → applications per vacancy,
+  conversion). HR sees *Вакансии* only. 7/30/90 days or a year.
+- **Tracking codes:** GA4, Yandex Metrica and Meta Pixel ids in **Настройки сайта**, checked
+  for format; the site loads them only after "Принять".
+- **Start screen:** new applications and submissions with the latest five, the week's views
+  (the whole site, or the vacancies for HR) and drafts in the sections the user edits.
+- **Checked:** e2e tests for collecting (bots, other origins, nothing personal stored, the
+  salt dropped at night), every report, the widgets per role, and the tracking ids; in a real
+  browser the statistics and start screen with seeded data, on desktop and phone.
+- **Left on the site** ([site-integration.md](site-integration.md)): the cookie banner
+  (Accept all / Reject / Configure, texts in the message files), loading the counters after
+  consent, and the statistics script.
 
-## Stage 6 — Audit log screen, retention, backups
+## Stage 6 — Audit log screen, retention, backups (done)
 
 | Data | Kept |
 |---|---|
@@ -205,18 +240,48 @@ history, scheduling, unsaved-changes warning, Ctrl+S.
 | Statistics events | 13 months |
 | Backups | 14 daily + 8 weekly; restore tested monthly |
 
-## Stage 7 — hh.uz import
+- **Журнал действий** (administrator only): every action in Russian, filters by section,
+  user, text or object id and period; each entry opens to IP, browser and what changed
+  (status from → to…), with a link to the object.
+- **Retention:** a nightly job (04:00 Tashkent) deletes for good what is past the periods
+  above, resumes with their applications; a run that removed something is logged with the
+  counts. Trash, versions, form limits and statistics salts keep their own cleanups.
+- **Restore test:** `deploy/restore-test.sh`, monthly from cron, restores the newest dump into
+  a scratch database, compares row counts with the live one, checks the files archive and
+  drops the scratch database.
+- **Checked:** e2e tests for the filters, permissions and every retention period (resume
+  files included); the restore script run against a real Postgres.
 
-- Anonymous access to hh vacancies returns 403 (checked 2026-10-13): the company's hh.uz employer
-  account must register an app at dev.hh.ru and get an application token.
-- Hourly sync of the company's vacancies; new ones arrive as drafts (auto-publish is a switch),
-  closed on hh → closed on the site, HR's edits can be protected from sync.
+## Stage 7 — hh.uz import (done; needs the token)
+
+- Anonymous access to hh vacancies returns 403 (checked 2026-10-13): the company's hh.uz
+  employer account must register an app at dev.hh.ru and get an application token. It goes
+  into **Интеграции → hh.uz** with the employer id and the direction for new vacancies.
+- **Hourly sync:** new open vacancies arrive as drafts (or live with "Публиковать новые
+  сразу"); the hh text goes into Uzbek and Russian, the description into the editor's format,
+  key skills into requirements. Changes on hh follow at the same address; closed on hh →
+  closed on the site, back on hh → reopened.
+- **HR's edits win:** once an imported vacancy is edited in the admin, the sync leaves its
+  text alone and only opens or closes it. A vacancy deleted in the admin is not brought back.
+  Unpublished changes are never published by the sync.
+- The sync acts as a system account «hh.uz» (shown as the author in history), which can't log
+  in and isn't listed among users. The last run's result is on the Интеграции card, with
+  "Синхронизировать сейчас"; runs that change something, and failures when they start, are
+  in the audit log.
 - Not included: importing responses from hh (needs paid employer API access).
+- **Checked:** e2e tests against a fake hh API (create, update, close, reopen, protected
+  edits, trash, 403 from hh); the HTML conversion unit-tested.
 
-## Stage 8 — Hardening
+## Stage 8 — Hardening (done for the admin)
 
-Browser tests of the key flows for each role, a security pass (sign-in, uploads, headers),
-final documentation.
+- **Browser tests** (`dashboard/e2e`, Playwright, `pnpm --filter @autodoc/dashboard e2e`, a
+  `browser` job in GitLab CI): marketing's and HR's menus and the "Нет доступа" pages, login
+  with 2FA and with a wrong password, a submission taken into work with a comment, a resume
+  downloaded, an application deleted and restored from the trash.
+- **Security pass:** [SECURITY.md](SECURITY.md). Every admin route swept for 401 without a
+  session, private storage unreachable, headers checked; added `Cache-Control: no-store` for
+  admin answers and a `Permissions-Policy`; `pnpm audit` clean.
+- **Left:** the same pass on the site once it posts the forms and loads the counters.
 
 ## What the business needs to provide
 
@@ -251,3 +316,8 @@ importing hh responses, GA4/Metrica data inside the admin.
 - **Menu:** order and show/hide of the site's items (labels in Тексты сайта), not free links.
 - **Site texts are stored as changes over the code's texts**, not as a full copy: texts added
   to the site later appear in the admin by themselves.
+- **Excel files are written by a small built-in writer** (`api/src/common/xlsx.ts`), not a
+  spreadsheet library: one sheet, text and numbers, never formulas, so a cell starting with
+  "=" can't run anything.
+- **Visitors in the statistics are counted per day.** Without cookies a returning visitor
+  can't be recognised the next day, so "visitors" over a period is the sum of daily visitors.
