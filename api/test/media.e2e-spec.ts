@@ -169,7 +169,7 @@ describe('media library', () => {
     const result = await app
       .get(TrashService)
       .purgeExpired(new Date(Date.now() + 31 * 24 * 60 * 60 * 1000))
-    expect(result).toEqual({ documents: 0, media: 1 })
+    expect(result).toEqual({ documents: 0, media: 1, leads: 0, applications: 0 })
   })
 
   it('keeps the library away from HR', async () => {

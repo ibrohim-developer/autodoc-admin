@@ -43,6 +43,7 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<T
     SITE_ORIGIN: 'http://site.test',
     // Nothing listens here unless a test passes its own fake site.
     SITE_INTERNAL_URL: 'http://127.0.0.1:9',
+    TELEGRAM_API_URL: 'http://127.0.0.1:9',
     SITE_API_TOKEN,
     REVALIDATE_SECRET,
     PREVIEW_SECRET,
@@ -68,7 +69,7 @@ export async function resetDatabase(app: NestExpressApplication): Promise<void> 
   await app
     .get(DataSource)
     .query(
-      'TRUNCATE users, refresh_tokens, password_tokens, audit_log, documents, document_versions, media, media_usages RESTART IDENTITY CASCADE',
+      'TRUNCATE users, refresh_tokens, password_tokens, audit_log, documents, document_versions, media, media_usages, leads, applications, form_hits, app_settings RESTART IDENTITY CASCADE',
     )
 }
 

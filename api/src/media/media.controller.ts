@@ -86,7 +86,13 @@ export class MediaController {
   /** One photo per request, field `file`. Over 20 MB is refused before it reaches memory twice. */
   @Post()
   @RequirePermission('media.write')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      // Browsers send file names as raw UTF-8; busboy's default would garble Cyrillic ones.
+      defParamCharset: 'utf8',
+      limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
+    }),
+  )
   upload(
     @UploadedFile() file: UploadedMediaFile | undefined,
     @CurrentUser() actor: AuthUser,

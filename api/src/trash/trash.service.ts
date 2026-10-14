@@ -6,15 +6,17 @@ import { In, Repository } from 'typeorm'
 import type { AuthUser } from '../common/request.js'
 import { ContentTypeRegistry } from '../content/content-types.js'
 import { DocumentsService, TRASH_DAYS } from '../content/documents.service.js'
+import { ApplicationsService } from '../forms/applications.service.js'
+import { LeadsService } from '../forms/leads.service.js'
 import { MediaService, mediaUrl } from '../media/media.service.js'
 import { User } from '../users/user.entity.js'
 
-export type TrashKind = 'document' | 'media'
+export type TrashKind = 'document' | 'media' | 'lead' | 'application'
 
 export type TrashItem = {
   kind: TrashKind
   id: string
-  /** Content type, or `media` for photos. */
+  /** Content type, or `media`, `lead`, `application`. */
   type: string
   typeLabel: string
   title: string
@@ -36,6 +38,21 @@ function canHandleMedia(actor: AuthUser): boolean {
   return actor.permissions.includes('trash.content') && actor.permissions.includes('media.write')
 }
 
+/** Form submissions belong with marketing's trash. */
+function canHandleLeads(actor: AuthUser): boolean {
+  return actor.permissions.includes('trash.content') && actor.permissions.includes('leads.write')
+}
+
+/** Job applications belong with the vacancies: HR's trash. */
+function canHandleApplications(actor: AuthUser): boolean {
+  return (
+    actor.permissions.includes('trash.vacancies') &&
+    actor.permissions.includes('applications.write')
+  )
+}
+
+const forbidden = () => new ForbiddenException({ code: 'forbidden', message: 'Недостаточно прав' })
+
 @Injectable()
 export class TrashService {
   private readonly logger = new Logger(TrashService.name)
@@ -43,6 +60,8 @@ export class TrashService {
   constructor(
     private readonly documents: DocumentsService,
     private readonly media: MediaService,
+    private readonly leads: LeadsService,
+    private readonly applications: ApplicationsService,
     private readonly registry: ContentTypeRegistry,
     @InjectRepository(User) private readonly users: Repository<User>,
   ) {}
@@ -50,12 +69,16 @@ export class TrashService {
   /** Everything this user may restore, newest deletion first. */
   async list(actor: AuthUser): Promise<TrashItem[]> {
     const types = this.registry.withPermission(actor, 'trash')
-    const [documents, photos] = await Promise.all([
+    const [documents, photos, leads, applications] = await Promise.all([
       this.documents.listTrashed(types),
       canHandleMedia(actor) ? this.media.listTrashed() : Promise.resolve([]),
+      canHandleLeads(actor) ? this.leads.listTrashed() : Promise.resolve([]),
+      canHandleApplications(actor) ? this.applications.listTrashed() : Promise.resolve([]),
     ])
 
-    const deleters = [...documents.map((d) => d.deletedBy), ...photos.map((m) => m.deletedBy)]
+    const deleters = [documents, photos, leads, applications].flatMap((rows) =>
+      rows.map((row) => row.deletedBy),
+    )
     const ids = [...new Set(deleters.filter((id): id is string => Boolean(id)))]
     const users = ids.length
       ? await this.users.find({ select: { id: true, name: true }, where: { id: In(ids) } })
@@ -94,43 +117,91 @@ export class TrashService {
           purgeAt: purgeDate(deletedAt),
         }
       }),
+      ...leads.map((lead) => {
+        const deletedAt = lead.deletedAt as Date
+        return {
+          kind: 'lead' as const,
+          id: lead.id,
+          type: 'lead',
+          typeLabel: 'Заявка',
+          title: `Заявка №${lead.number} · ${lead.name}`,
+          thumbUrl: null,
+          deletedAt,
+          deletedBy: by(lead.deletedBy),
+          purgeAt: purgeDate(deletedAt),
+        }
+      }),
+      ...applications.map((application) => {
+        const deletedAt = application.deletedAt as Date
+        return {
+          kind: 'application' as const,
+          id: application.id,
+          type: 'application',
+          typeLabel: 'Отклик',
+          title: `Отклик №${application.number} · ${application.name}`,
+          thumbUrl: null,
+          deletedAt,
+          deletedBy: by(application.deletedBy),
+          purgeAt: purgeDate(deletedAt),
+        }
+      }),
     ]
     return items.sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime())
   }
 
   async restore(kind: TrashKind, id: string, actor: AuthUser, req: Request): Promise<void> {
-    if (kind === 'media') {
-      if (!canHandleMedia(actor))
-        throw new ForbiddenException({ code: 'forbidden', message: 'Недостаточно прав' })
-      return this.media.restoreFromTrash(id, actor, req)
+    switch (kind) {
+      case 'media':
+        if (!canHandleMedia(actor)) throw forbidden()
+        return this.media.restoreFromTrash(id, actor, req)
+      case 'lead':
+        if (!canHandleLeads(actor)) throw forbidden()
+        return this.leads.restoreFromTrash(id, actor, req)
+      case 'application':
+        if (!canHandleApplications(actor)) throw forbidden()
+        return this.applications.restoreFromTrash(id, actor, req)
+      default:
+        return this.documents.restoreFromTrash(id, actor, req)
     }
-    return this.documents.restoreFromTrash(id, actor, req)
   }
 
   async purge(kind: TrashKind, id: string, actor: AuthUser, req: Request): Promise<void> {
-    if (kind === 'media') {
-      if (!canHandleMedia(actor))
-        throw new ForbiddenException({ code: 'forbidden', message: 'Недостаточно прав' })
-      return this.media.purge(id, actor, req)
+    switch (kind) {
+      case 'media':
+        if (!canHandleMedia(actor)) throw forbidden()
+        return this.media.purge(id, actor, req)
+      case 'lead':
+        if (!canHandleLeads(actor)) throw forbidden()
+        return this.leads.purge(id, actor, req)
+      case 'application':
+        if (!canHandleApplications(actor)) throw forbidden()
+        return this.applications.purge(id, actor, req)
+      default:
+        return this.documents.purge(id, actor, req)
     }
-    return this.documents.purge(id, actor, req)
   }
 
   /** Every night at 03:30 Tashkent time: items deleted more than 30 days ago go for good. */
   @Cron('30 3 * * *', { name: 'purge-trash', timeZone: 'Asia/Tashkent' })
-  async purgeExpired(now = new Date()): Promise<{ documents: number; media: number }> {
+  async purgeExpired(
+    now = new Date(),
+  ): Promise<{ documents: number; media: number; leads: number; applications: number }> {
     const cutoff = new Date(now.getTime() - TRASH_DAYS * DAY_MS)
     try {
       // Documents first: their media usages go with them, which frees the photos.
       const documents = await this.documents.purgeExpired(cutoff)
       const media = await this.media.purgeExpired(cutoff)
-      if (documents + media > 0) {
-        this.logger.log(`Trash cleanup: ${documents} document(s), ${media} photo(s) removed`)
+      const leads = await this.leads.purgeExpired(cutoff)
+      const applications = await this.applications.purgeExpired(cutoff)
+      if (documents + media + leads + applications > 0) {
+        this.logger.log(
+          `Trash cleanup: ${documents} document(s), ${media} photo(s), ${leads} submission(s), ${applications} application(s) removed`,
+        )
       }
-      return { documents, media }
+      return { documents, media, leads, applications }
     } catch (error) {
       this.logger.error(`Trash cleanup failed: ${String(error)}`)
-      return { documents: 0, media: 0 }
+      return { documents: 0, media: 0, leads: 0, applications: 0 }
     }
   }
 }
