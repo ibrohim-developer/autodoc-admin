@@ -56,6 +56,17 @@ pnpm --filter @autodoc/api test:e2e    # API end to end against a throwaway Post
   `storage/private`. A photo in use can't be deleted.
 - Deleted items and photos wait 30 days in Корзина; a nightly job removes older ones.
 
+## Forms and statistics
+
+- The site's forms post from the visitor's browser to `POST /api/v1/leads` and
+  `/api/v1/applications`, and its script reports page views to `/api/v1/collect`. Contracts:
+  [docs/site-integration.md](docs/site-integration.md).
+- Resumes are kept in `storage/private/resumes` and only come out through
+  `GET /api/admin/applications/:id/resume` (logged).
+- Telegram alerts: **Интеграции** in the dashboard (bot token, two chats). `TELEGRAM_API_URL`
+  only changes in tests.
+- Statistics keep no cookies and no addresses: see the Stage 5 notes in the roadmap.
+
 The content types are in [`api/src/site-content/`](api/src/site-content/): news and their
 categories, vacancies and directions, site texts, settings, the seven pages, the privacy policy
 and terms, redirects. When a live page's address changes, redirects from the old address are

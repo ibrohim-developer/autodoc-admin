@@ -91,6 +91,17 @@ their own spinner first don't lose it.
 stringify: they contain hand-formatted one-line objects, and a reflowed file conflicts with
 every parallel edit.
 
+**Forms and statistics are public and browser-facing** (`/api/v1/leads`, `/applications`,
+`/collect`): no site token, `SiteOriginGuard`, own per-form limits in `form_hits`
+(`FormLimitsService`, not the throttler). Never store a visitor's IP: forms keep an HMAC of it,
+statistics a daily-salted hash. Telegram alerts never carry names, phones or message text.
+
+**Multipart file names need `defParamCharset: 'utf8'`** in `FileInterceptor`, or Cyrillic
+names arrive garbled.
+
+**Files from the API go through `requestFile()` + `saveFile()`** in the dashboard
+(`lib/api-client.ts`), never a bare link: the session refresh and errors work the same.
+
 ## Commits
 
 Never add Claude as author or co-author (no `Co-Authored-By` / `Claude-Session` trailers):
