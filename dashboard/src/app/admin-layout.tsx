@@ -89,19 +89,19 @@ function UserMenu({ me }: { me: Me }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-9 gap-2 px-2">
-          <span className="grid size-7 place-items-center rounded-full bg-secondary font-medium text-xs">
+        <Button variant="ghost" className="h-auto w-full justify-start gap-3 px-2 py-2">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary font-medium text-xs">
             {me.name.slice(0, 1).toUpperCase()}
           </span>
-          <span className="hidden text-left sm:block">
-            <span className="block font-medium text-sm leading-tight">{me.name}</span>
-            <span className="block text-muted-foreground text-xs leading-tight">
+          <span className="min-w-0 text-left">
+            <span className="block truncate font-medium text-sm leading-tight">{me.name}</span>
+            <span className="block truncate text-muted-foreground text-xs leading-tight">
               {me.roleLabel}
             </span>
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent side="top" align="start" className="w-60">
         <DropdownMenuLabel className="font-normal">
           <span className="block font-medium">{me.name}</span>
           <span className="block text-muted-foreground text-xs">{me.email}</span>
@@ -120,39 +120,57 @@ function UserMenu({ me }: { me: Me }) {
   )
 }
 
+/** The bottom of the sidebar: the theme and the signed-in user (profile, log out). */
+function SidebarFooter({ me }: { me: Me }) {
+  return (
+    <div className="space-y-2 border-t p-2">
+      <ThemeToggle />
+      <UserMenu me={me} />
+    </div>
+  )
+}
+
+/** Brand on top, the sections in the middle (scrolling on their own), the user at the bottom. */
+function SidebarPanel({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
+  return (
+    <div className="flex h-full flex-col">
+      <Brand />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <Sidebar me={me} onNavigate={onNavigate} />
+      </div>
+      <SidebarFooter me={me} />
+    </div>
+  )
+}
+
 export function AdminLayout({ me }: { me: Me }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
     <div className="flex min-h-dvh">
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 overflow-y-auto border-r bg-card md:block">
-        <Brand />
-        <Sidebar me={me} />
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r bg-card md:block">
+        <SidebarPanel me={me} />
       </aside>
 
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DialogContent className="top-0 left-0 h-dvh max-w-72 translate-x-0 translate-y-0 overflow-y-auto rounded-none p-0 sm:max-w-72">
+        <DialogContent className="top-0 left-0 block h-dvh max-w-72 translate-x-0 translate-y-0 rounded-none p-0 sm:max-w-72">
           <DialogTitle className="sr-only">Меню</DialogTitle>
-          <Brand />
-          <Sidebar me={me} onNavigate={() => setDrawerOpen(false)} />
+          <SidebarPanel me={me} onNavigate={() => setDrawerOpen(false)} />
         </DialogContent>
       </Dialog>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
+        {/* Phones only: the sidebar (with the user and the theme) opens from here. */}
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur md:hidden">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
             aria-label="Открыть меню"
             onClick={() => setDrawerOpen(true)}
           >
             <Menu aria-hidden="true" />
           </Button>
-          <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            <UserMenu me={me} />
-          </div>
+          <Brand />
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
           <Outlet />
