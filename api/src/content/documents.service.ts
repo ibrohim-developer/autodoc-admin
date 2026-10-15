@@ -146,13 +146,24 @@ export class DocumentsService {
 
   async list(
     typeName: string,
-    query: { status?: DocumentStatus; q?: string; page: number; pageSize: number },
+    query: {
+      status?: DocumentStatus | 'live'
+      q?: string
+      ref?: string
+      page: number
+      pageSize: number
+    },
     actor: AuthUser,
-  ): Promise<{ items: DocumentSummary[]; total: number }> {
+  ): Promise<{
+    items: DocumentSummary[]
+    total: number
+    counts: Record<DocumentStatus | 'live', number>
+  }> {
     const type = this.registry.get(typeName)
     this.assert(actor, type, 'read')
 
     const qb = this.documents.createQueryBuilder('d').where('d.type = :type', { type: type.type })
+    if (query.status === 'live') qb.andWhere('d.published IS NOT NULL AND d.scheduled_at IS NULL')
     if (query.status === 'draft') qb.andWhere('d.published IS NULL AND d.scheduled_at IS NULL')
     if (query.status === 'published') {
       qb.andWhere(
@@ -167,6 +178,14 @@ export class DocumentsService {
     if (query.status === 'scheduled') qb.andWhere('d.scheduled_at IS NOT NULL')
     // The documents are small and few: a text match over the JSON is fast enough and finds any field.
     if (query.q) qb.andWhere('d.draft::text ILIKE :q', { q: `%${query.q}%` })
+    if (query.ref) {
+      const [field, id] = query.ref.split(':') as [string, string]
+      // Only the type's own reference fields: their names are checked identifiers.
+      if (!(type.references ?? []).some((reference) => reference.field === field)) {
+        throw new BadRequestException({ code: 'bad_filter', message: 'Неизвестный фильтр' })
+      }
+      qb.andWhere(`d.draft -> 'shared' ->> '${field}' = :refId`, { refId: id })
+    }
 
     if (type.adminOrder) this.applyOrder(qb, type, 'draft')
     const [rows, total] = await qb
@@ -175,7 +194,32 @@ export class DocumentsService {
       .take(query.pageSize)
       .getManyAndCount()
     const names = await this.userNames(rows.map((row) => row.updatedBy))
-    return { items: rows.map((row) => this.summary(type, row, names)), total }
+    return {
+      items: rows.map((row) => this.summary(type, row, names)),
+      total,
+      counts: await this.counts(type.type),
+    }
+  }
+
+  /** How many documents of the type are in each state, for the list's tabs. */
+  private async counts(type: string): Promise<Record<DocumentStatus | 'live', number>> {
+    const [row] = await this.documents.query(
+      `SELECT
+         count(*) FILTER (WHERE published IS NULL AND scheduled_at IS NULL) AS draft,
+         count(*) FILTER (WHERE published IS NOT NULL AND draft_hash = published_hash AND scheduled_at IS NULL) AS published,
+         count(*) FILTER (WHERE published IS NOT NULL AND draft_hash <> published_hash AND scheduled_at IS NULL) AS changed,
+         count(*) FILTER (WHERE scheduled_at IS NOT NULL) AS scheduled,
+         count(*) FILTER (WHERE published IS NOT NULL AND scheduled_at IS NULL) AS live
+       FROM documents WHERE type = $1 AND deleted_at IS NULL`,
+      [type],
+    )
+    return {
+      draft: Number(row?.draft ?? 0),
+      published: Number(row?.published ?? 0),
+      changed: Number(row?.changed ?? 0),
+      scheduled: Number(row?.scheduled ?? 0),
+      live: Number(row?.live ?? 0),
+    }
   }
 
   async get(id: string, actor: AuthUser): Promise<DocumentView> {
@@ -708,7 +752,8 @@ export class DocumentsService {
       const data = (draft ? row.draft : row.published) as DocumentData
       const localizedFields = localize(data, locale)
       const translated = localizedFields.translated
-      const computed = this.registry.find(row.type)?.computed?.(localizedFields.fields) ?? {}
+      const computed =
+        this.registry.find(row.type)?.computed?.(localizedFields.fields, data, locale) ?? {}
       const fields = { ...localizedFields.fields, ...computed }
       if (!keep) return { row, fields, translated }
       const picked = Object.fromEntries(Object.entries(fields).filter(([key]) => keep.has(key)))

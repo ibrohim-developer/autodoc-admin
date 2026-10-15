@@ -37,9 +37,15 @@ class ListQuery {
   @Matches(TYPE_PATTERN)
   type: string
 
+  /** `live`: on the site now, with or without unpublished changes. */
   @IsOptional()
-  @IsIn(['draft', 'published', 'changed', 'scheduled'])
-  status?: DocumentStatus
+  @IsIn(['draft', 'published', 'changed', 'scheduled', 'live'])
+  status?: DocumentStatus | 'live'
+
+  /** A reference field and the id it must point to: `categoryId:<uuid>`. */
+  @IsOptional()
+  @Matches(/^[a-zA-Z][a-zA-Z0-9_]{0,39}:[0-9a-f-]{36}$/)
+  ref?: string
 
   @IsOptional()
   @IsString()
