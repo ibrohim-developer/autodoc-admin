@@ -2,7 +2,6 @@ import { LogOut, Menu, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
@@ -18,14 +17,17 @@ import { cn } from '@/lib/cn'
 import type { Me } from '@/lib/session'
 import { navFor } from './navigation'
 
-function Brand() {
+function Brand({ dark = true }: { dark?: boolean }) {
   return (
-    <Link to="/" className="flex items-center gap-2 px-3 py-4 font-semibold">
-      <span className="grid size-8 place-items-center rounded-lg bg-primary font-bold text-primary-foreground text-sm">
+    <Link to="/" className="flex items-center gap-2.5 px-2.5 pt-1 pb-5">
+      <span className="grid size-7 place-items-center rounded-[7px] bg-[#2449d8] font-bold text-sm text-white">
         A
       </span>
-      <span>
-        Autodoc <span className="font-normal text-muted-foreground">· админ</span>
+      <span className="flex flex-col leading-tight">
+        <span className="font-semibold text-sm">autodoc.uz</span>
+        <span className={cn('text-[11px]', dark ? 'text-sidebar-muted' : 'text-muted-foreground')}>
+          Админ-панель
+        </span>
       </span>
     </Link>
   )
@@ -33,16 +35,19 @@ function Brand() {
 
 function Sidebar({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
   return (
-    <nav aria-label="Разделы" className="flex flex-col gap-4 px-2 pb-6">
-      {navFor(me).map((group) => (
-        <div key={group.label ?? 'main'}>
-          {group.label ? (
-            <p className="px-3 pb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-              {group.label}
-            </p>
-          ) : null}
+    <nav aria-label="Разделы" className="flex flex-col gap-1">
+      {navFor(me).map((group, index) => (
+        <div key={group.label}>
+          <p
+            className={cn(
+              'px-2.5 pb-1 text-[11px] text-sidebar-label uppercase tracking-[0.04em]',
+              index === 0 ? 'pt-2' : 'pt-4',
+            )}
+          >
+            {group.label}
+          </p>
           <ul className="flex flex-col gap-0.5">
-            {group.items.map(({ to, label, icon: Icon, ready }) => (
+            {group.items.map(({ to, label, ready }) => (
               <li key={to}>
                 {ready ? (
                   <NavLink
@@ -51,26 +56,24 @@ function Sidebar({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
                     onClick={onNavigate}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
+                        'flex items-center rounded-[7px] px-2.5 py-2 text-sm transition-colors',
                         isActive
-                          ? 'bg-accent font-medium text-accent-foreground'
-                          : 'text-foreground/80 hover:bg-muted hover:text-foreground',
+                          ? 'bg-sidebar-active font-medium text-white'
+                          : 'text-sidebar-muted hover:bg-sidebar-active/60 hover:text-sidebar-foreground',
                       )
                     }
                   >
-                    <Icon className="size-4 shrink-0" aria-hidden="true" />
                     {label}
                   </NavLink>
                 ) : (
                   <span
-                    className="flex cursor-default items-center gap-3 rounded-md px-3 py-2 text-muted-foreground/70 text-sm"
+                    className="flex cursor-default items-center gap-2 rounded-[7px] px-2.5 py-2 text-sidebar-muted/60 text-sm"
                     title="Раздел появится в следующих этапах"
                   >
-                    <Icon className="size-4 shrink-0" aria-hidden="true" />
                     {label}
-                    <Badge variant="outline" className="ml-auto font-normal text-[10px]">
+                    <span className="ml-auto rounded-[4px] border border-sidebar-border px-1.5 text-[10px]">
                       скоро
-                    </Badge>
+                    </span>
                   </span>
                 )}
               </li>
@@ -82,6 +85,18 @@ function Sidebar({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
   )
 }
 
+/** "Дилноза Каримова" → "ДК". */
+function initials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || '?'
+  )
+}
+
 function UserMenu({ me }: { me: Me }) {
   const navigate = useNavigate()
   const logout = useLogout()
@@ -89,17 +104,22 @@ function UserMenu({ me }: { me: Me }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-auto w-full justify-start gap-3 px-2 py-2">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary font-medium text-xs">
-            {me.name.slice(0, 1).toUpperCase()}
+        <button
+          type="button"
+          className="flex w-full items-center gap-2.5 rounded-[7px] p-2.5 text-left outline-none transition-colors hover:bg-sidebar-active focus-visible:ring-2 focus-visible:ring-[#2449d8]"
+        >
+          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#3a3a3f] text-white text-xs">
+            {initials(me.name)}
           </span>
-          <span className="min-w-0 text-left">
-            <span className="block truncate font-medium text-sm leading-tight">{me.name}</span>
-            <span className="block truncate text-muted-foreground text-xs leading-tight">
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] text-sidebar-foreground leading-tight">
+              {me.name}
+            </span>
+            <span className="block truncate text-[11px] text-sidebar-muted leading-tight">
               {me.roleLabel}
             </span>
           </span>
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-60">
         <DropdownMenuLabel className="font-normal">
@@ -123,8 +143,8 @@ function UserMenu({ me }: { me: Me }) {
 /** The bottom of the sidebar: the theme and the signed-in user (profile, log out). */
 function SidebarFooter({ me }: { me: Me }) {
   return (
-    <div className="space-y-2 border-t p-2">
-      <ThemeToggle />
+    <div className="mt-auto space-y-1 border-sidebar-border border-t pt-2">
+      <ThemeToggle onDark />
       <UserMenu me={me} />
     </div>
   )
@@ -133,9 +153,9 @@ function SidebarFooter({ me }: { me: Me }) {
 /** Brand on top, the sections in the middle (scrolling on their own), the user at the bottom. */
 function SidebarPanel({ me, onNavigate }: { me: Me; onNavigate?: () => void }) {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-sidebar px-3 pt-5 pb-3 text-sidebar-foreground">
       <Brand />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pb-3">
         <Sidebar me={me} onNavigate={onNavigate} />
       </div>
       <SidebarFooter me={me} />
@@ -148,12 +168,12 @@ export function AdminLayout({ me }: { me: Me }) {
 
   return (
     <div className="flex min-h-dvh">
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 border-r bg-card md:block">
+      <aside className="sticky top-0 hidden h-dvh w-58 shrink-0 md:block">
         <SidebarPanel me={me} />
       </aside>
 
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DialogContent className="top-0 left-0 block h-dvh max-w-72 translate-x-0 translate-y-0 rounded-none p-0 sm:max-w-72">
+        <DialogContent className="top-0 left-0 block h-dvh max-w-72 translate-x-0 translate-y-0 rounded-none border-0 p-0 sm:max-w-72 [&>button]:text-sidebar-foreground">
           <DialogTitle className="sr-only">Меню</DialogTitle>
           <SidebarPanel me={me} onNavigate={() => setDrawerOpen(false)} />
         </DialogContent>
@@ -170,9 +190,9 @@ export function AdminLayout({ me }: { me: Me }) {
           >
             <Menu aria-hidden="true" />
           </Button>
-          <Brand />
+          <Brand dark={false} />
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+        <main className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-8 sm:px-8">
           <Outlet />
         </main>
       </div>

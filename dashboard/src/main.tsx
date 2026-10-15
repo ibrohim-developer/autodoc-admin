@@ -4,6 +4,8 @@ import { RouterProvider } from 'react-router'
 import { AppProviders } from '@/app/providers'
 import { router } from '@/app/router'
 import { watchSystemTheme } from '@/stores/theme-store'
+// Onest, served from the dashboard itself: the admin's CSP allows no font CDN.
+import '@fontsource-variable/onest'
 import '@/styles/index.css'
 
 const rootElement = document.getElementById('root')

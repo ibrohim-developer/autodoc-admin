@@ -3,10 +3,10 @@ import { cn } from '@/lib/cn'
 import { type DocumentStatus, STATUS_LABELS } from '@/lib/content'
 
 const STYLES: Record<DocumentStatus, string> = {
-  draft: 'text-muted-foreground',
-  published: 'border-transparent bg-primary/15 text-primary',
+  draft: 'border-transparent bg-neutral-soft text-neutral',
+  published: 'border-transparent bg-success-soft text-success',
   changed: 'border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  scheduled: 'border-transparent bg-sky-500/15 text-sky-700 dark:text-sky-300',
+  scheduled: 'border-transparent bg-info-soft text-info',
 }
 
 const SHORT: Partial<Record<DocumentStatus, string>> = { changed: 'Есть изменения' }

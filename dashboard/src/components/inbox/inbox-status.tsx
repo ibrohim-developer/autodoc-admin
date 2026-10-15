@@ -5,10 +5,10 @@ import { cn } from '@/lib/cn'
 export type InboxTone = 'new' | 'active' | 'done' | 'closed'
 
 const TONES: Record<InboxTone, string> = {
-  new: 'border-transparent bg-sky-500/15 text-sky-700 dark:text-sky-300',
+  new: 'border-transparent bg-info-soft text-info',
   active: 'border-transparent bg-amber-500/15 text-amber-700 dark:text-amber-300',
-  done: 'border-transparent bg-primary/15 text-primary',
-  closed: 'text-muted-foreground',
+  done: 'border-transparent bg-success-soft text-success',
+  closed: 'border-transparent bg-neutral-soft text-neutral',
 }
 
 export function InboxStatusBadge({

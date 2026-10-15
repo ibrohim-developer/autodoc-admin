@@ -1,127 +1,49 @@
-import {
-  BarChart3,
-  BriefcaseBusiness,
-  FileText,
-  FolderKanban,
-  History,
-  House,
-  Image,
-  Inbox,
-  type LucideIcon,
-  Newspaper,
-  Plug,
-  Settings,
-  Shuffle,
-  Trash2,
-  Type,
-  UserRoundSearch,
-  Users,
-} from 'lucide-react'
 import type { Me, Permission } from '@/lib/session'
 import { can } from '@/lib/session'
 
 export type NavItem = {
   to: string
   label: string
-  icon: LucideIcon
   /** Shown only to roles that have it — the API refuses the rest with 403 anyway. */
   permission: Permission
   /** False until the module ships: listed (so everyone sees what is coming), not clickable. */
   ready: boolean
 }
 
-export type NavGroup = { label: string | null; items: NavItem[] }
+export type NavGroup = { label: string; items: NavItem[] }
 
+/** Grouped as in the design: what the site shows, HR's part, and the running of the admin. */
 export const NAV: NavGroup[] = [
   {
-    label: null,
-    items: [{ to: '/', label: 'Главная', icon: House, permission: 'home.view', ready: true }],
-  },
-  {
-    label: 'Сайт',
+    label: 'Контент',
     items: [
-      { to: '/news', label: 'Новости', icon: Newspaper, permission: 'content.read', ready: true },
-      {
-        to: '/projects',
-        label: 'Проекты',
-        icon: FolderKanban,
-        permission: 'content.read',
-        ready: false,
-      },
-      { to: '/pages', label: 'Страницы', icon: FileText, permission: 'content.read', ready: true },
-      { to: '/texts', label: 'Тексты сайта', icon: Type, permission: 'content.read', ready: true },
-      { to: '/library', label: 'Медиатека', icon: Image, permission: 'media.read', ready: true },
-      {
-        to: '/settings',
-        label: 'Настройки сайта',
-        icon: Settings,
-        permission: 'content.read',
-        ready: true,
-      },
-      {
-        to: '/redirects',
-        label: 'Редиректы',
-        icon: Shuffle,
-        permission: 'content.read',
-        ready: true,
-      },
+      { to: '/', label: 'Обзор', permission: 'home.view', ready: true },
+      { to: '/pages', label: 'Страницы', permission: 'content.read', ready: true },
+      { to: '/news', label: 'Новости и блог', permission: 'content.read', ready: true },
+      { to: '/projects', label: 'Проекты холдинга', permission: 'content.read', ready: false },
+      { to: '/texts', label: 'Тексты сайта', permission: 'content.read', ready: true },
+      { to: '/library', label: 'Медиатека', permission: 'media.read', ready: true },
+      { to: '/leads', label: 'Заявки', permission: 'leads.read', ready: true },
     ],
   },
   {
-    label: 'Карьера',
+    label: 'HR',
     items: [
-      {
-        to: '/vacancies',
-        label: 'Вакансии',
-        icon: BriefcaseBusiness,
-        permission: 'vacancies.read',
-        ready: true,
-      },
-      {
-        to: '/applications',
-        label: 'Отклики',
-        icon: UserRoundSearch,
-        permission: 'applications.read',
-        ready: true,
-      },
+      { to: '/vacancies', label: 'Вакансии', permission: 'vacancies.read', ready: true },
+      { to: '/applications', label: 'Отклики', permission: 'applications.read', ready: true },
     ],
   },
   {
-    label: 'Обращения',
-    items: [{ to: '/leads', label: 'Заявки', icon: Inbox, permission: 'leads.read', ready: true }],
-  },
-  {
-    label: 'Аналитика',
+    label: 'Система',
     items: [
       // HR sees the vacancy tab only; the page itself decides which tabs to show.
-      {
-        to: '/stats',
-        label: 'Статистика',
-        icon: BarChart3,
-        permission: 'stats.vacancies',
-        ready: true,
-      },
-    ],
-  },
-  {
-    label: 'Управление',
-    items: [
-      { to: '/trash', label: 'Корзина', icon: Trash2, permission: 'trash.vacancies', ready: true },
-      { to: '/users', label: 'Пользователи', icon: Users, permission: 'users.read', ready: true },
-      {
-        to: '/audit',
-        label: 'Журнал действий',
-        icon: History,
-        permission: 'audit.read',
-        ready: true,
-      },
-      {
-        to: '/integrations',
-        label: 'Интеграции',
-        icon: Plug,
-        permission: 'integrations.manage',
-        ready: true,
-      },
+      { to: '/stats', label: 'Аналитика', permission: 'stats.vacancies', ready: true },
+      { to: '/settings', label: 'Настройки сайта', permission: 'content.read', ready: true },
+      { to: '/redirects', label: 'Редиректы', permission: 'content.read', ready: true },
+      { to: '/trash', label: 'Корзина', permission: 'trash.vacancies', ready: true },
+      { to: '/users', label: 'Пользователи', permission: 'users.read', ready: true },
+      { to: '/audit', label: 'Журнал действий', permission: 'audit.read', ready: true },
+      { to: '/integrations', label: 'Интеграции', permission: 'integrations.manage', ready: true },
     ],
   },
 ]

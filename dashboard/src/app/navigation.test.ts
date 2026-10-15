@@ -6,18 +6,12 @@ const labels = (me: Parameters<typeof navFor>[0]) =>
 
 describe('navFor', () => {
   it('shows HR only vacancies, applications, vacancy stats and the trash', () => {
-    expect(labels(meFixtures.hr)).toEqual([
-      'Главная',
-      'Вакансии',
-      'Отклики',
-      'Статистика',
-      'Корзина',
-    ])
+    expect(labels(meFixtures.hr)).toEqual(['Обзор', 'Вакансии', 'Отклики', 'Аналитика', 'Корзина'])
   })
 
   it('shows marketing everything except the audit log and integrations', () => {
     const marketing = labels(meFixtures.marketing)
-    expect(marketing).toContain('Новости')
+    expect(marketing).toContain('Новости и блог')
     expect(marketing).toContain('Заявки')
     expect(marketing).toContain('Пользователи')
     expect(marketing).not.toContain('Журнал действий')
@@ -30,9 +24,8 @@ describe('navFor', () => {
   })
 
   it('drops groups that end up empty', () => {
-    const groups = navFor(meFixtures.hr).map((group) => group.label)
-    expect(groups).not.toContain('Сайт')
-    expect(groups).not.toContain('Обращения')
+    const hr = { ...meFixtures.hr, permissions: ['vacancies.read', 'applications.read'] }
+    expect(navFor(hr).map((group) => group.label)).toEqual(['HR'])
   })
 
   // The server sends /api and /media to the API and the file handler, so a dashboard page
