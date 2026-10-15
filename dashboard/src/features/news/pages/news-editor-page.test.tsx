@@ -56,9 +56,7 @@ describe('NewsEditorPage', () => {
     await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() => expect(router?.state.location.pathname).toBe(`/news/${ID}`))
-    const sent = sentBody(fetchMock, 'POST admin/content') as {
-      data: { shared: { blocks: { id: string }[] }; locales: Record<string, unknown> }
-    }
+    const sent = sentBody(fetchMock, 'POST admin/content')
     expect(sent).toEqual({
       type: 'post',
       data: {
@@ -69,12 +67,12 @@ describe('NewsEditorPage', () => {
           coverFull: false,
           pinned: false,
           categoryId: null,
-          // A new post starts with one empty text block.
-          blocks: [{ id: expect.any(String), type: 'text' }],
+          // An empty gallery and video aren't sent.
+          blocks: [{ id: 'text', type: 'text' }],
           ogImage: null,
         },
-        // Russian and English were left empty: not sent, so the site shows Uzbek. Nor are
-        // empty blocks' texts.
+        // Russian and English were left empty: not sent, so the site shows Uzbek. Nor is the
+        // empty text.
         locales: {
           uz: { title: 'Yangi kiosklar', tags: [], seoTitle: '', seoDescription: '' },
         },
@@ -82,7 +80,8 @@ describe('NewsEditorPage', () => {
     })
   })
 
-  it('opens a post saved before blocks as blocks, and adds, moves and removes them', async () => {
+  it('shows the text, gallery and video sections, also for a post saved before them', async () => {
+    const PHOTO = '44444444-4444-4444-8444-444444444444'
     const fetchMock = stubApi({
       ...noCategories,
       [`GET admin/content/${ID}`]: {
@@ -91,7 +90,7 @@ describe('NewsEditorPage', () => {
             slug: 'eski',
             date: '2026-10-01',
             cover: null,
-            gallery: [{ mediaId: '44444444-4444-4444-8444-444444444444' }],
+            gallery: [{ mediaId: PHOTO }],
             videoUrl: 'https://youtu.be/abc',
           },
           locales: {
@@ -115,14 +114,17 @@ describe('NewsEditorPage', () => {
       session: meFixtures.marketing,
     })
 
-    // Text, gallery, video: the old fields as three blocks.
-    expect(await screen.findByRole('button', { name: 'Удалить блок «Текст»' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Удалить блок «Галерея»' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Текст' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Галерея' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Видео' })).toBeInTheDocument()
     expect(screen.getByText('YouTube')).toBeInTheDocument()
+    // Nothing to add, move or remove: the sections are fixed.
+    expect(screen.queryByText('Добавить блок:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Удалить блок/ })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Удалить блок «Галерея»' }))
-    await user.click(screen.getByRole('button', { name: 'Фото' }))
-    await user.click(screen.getByRole('button', { name: 'Блок «Видео» ниже' }))
+    const video = screen.getByRole('textbox', { name: 'Ссылка' })
+    await user.clear(video)
+    await user.type(video, 'https://www.instagram.com/reel/xyz/')
     await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() =>
@@ -133,18 +135,80 @@ describe('NewsEditorPage', () => {
     const { data } = sentBody(fetchMock, `PUT admin/content/${ID}`) as {
       data: { shared: Record<string, unknown>; locales: { uz: Record<string, unknown> } }
     }
-    const blocks = data.shared.blocks as { id: string; type: string }[]
-    expect(blocks.map((block) => block.type)).toEqual(['text', 'image', 'video'])
+    expect(data.shared.blocks).toEqual([
+      { id: 'text', type: 'text' },
+      { id: 'gallery', type: 'gallery', items: [{ mediaId: PHOTO }] },
+      { id: 'video', type: 'video', url: 'https://www.instagram.com/reel/xyz/' },
+    ])
     expect(data.shared).not.toHaveProperty('gallery')
     expect(data.shared).not.toHaveProperty('videoUrl')
     expect(data.locales.uz).not.toHaveProperty('body')
     expect(data.locales.uz.blocks).toEqual({
-      [blocks[0]?.id as string]: {
+      text: {
         text: {
           type: 'doc',
           content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Matn' }] }],
         },
       },
+    })
+  })
+
+  it('joins the free blocks of an earlier post into the sections', async () => {
+    const [A, B] = ['44444444-4444-4444-8444-444444444444', '55555555-5555-4555-8555-555555555555']
+    const para = (t: string) => ({ type: 'paragraph', content: [{ type: 'text', text: t }] })
+    const fetchMock = stubApi({
+      ...noCategories,
+      [`GET admin/content/${ID}`]: {
+        body: view({
+          shared: {
+            slug: 'blokli',
+            date: '2026-10-01',
+            cover: null,
+            blocks: [
+              { id: 'a1', type: 'text' },
+              { id: 'b2', type: 'image', image: { mediaId: A } },
+              { id: 'c3', type: 'text' },
+              { id: 'd4', type: 'gallery', items: [{ mediaId: B }] },
+            ],
+          },
+          locales: {
+            uz: {
+              title: 'Blokli',
+              blocks: {
+                a1: { text: { type: 'doc', content: [para('Bir')] } },
+                c3: { text: { type: 'doc', content: [para('Ikki')] } },
+              },
+            },
+          },
+        }),
+      },
+      'GET admin/media': { body: { items: [], total: 0 } },
+      [`PUT admin/content/${ID}`]: (body) => ({ body: view((body as { data: unknown }).data) }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { user } = renderWithProviders(<NewsEditorPage />, {
+      path: '/news/:id',
+      route: `/news/${ID}`,
+      session: meFixtures.marketing,
+    })
+
+    await screen.findByRole('heading', { name: 'Текст' })
+    await user.type(screen.getByRole('textbox', { name: /^Заголовок/ }), '!')
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([, init]) => (init as RequestInit)?.method === 'PUT')).toBe(
+        true,
+      ),
+    )
+    const { data } = sentBody(fetchMock, `PUT admin/content/${ID}`) as {
+      data: { shared: Record<string, unknown>; locales: { uz: Record<string, unknown> } }
+    }
+    expect(data.shared.blocks).toEqual([
+      { id: 'text', type: 'text' },
+      { id: 'gallery', type: 'gallery', items: [{ mediaId: A }, { mediaId: B }] },
+    ])
+    expect(data.locales.uz.blocks).toEqual({
+      text: { text: { type: 'doc', content: [para('Bir'), para('Ikki')] } },
     })
   })
 

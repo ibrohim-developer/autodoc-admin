@@ -124,7 +124,7 @@ export function trackView(): () => void {
 ## News article: blocks
 
 A post's page (`GET /api/v1/content/post/<slug>?locale=…`) now has `data.blocks`, the article in
-order, each block already in the visitor's language (a text or caption not yet translated comes
+order (the admin writes text, then gallery, then video; empty ones are left out), each block already in the visitor's language (a text or caption not yet translated comes
 from Uzbek, block by block):
 
 ```ts

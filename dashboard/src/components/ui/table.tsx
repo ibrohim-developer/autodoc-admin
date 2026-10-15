@@ -1,9 +1,14 @@
 import type * as React from 'react'
 import { cn } from '@/lib/cn'
 
+/**
+ * Tables never scroll sideways: one column per table is `grow` and shrinks, its text cut with
+ * an ellipsis; less important columns hide when the table is narrow (container queries, `@2xl:`
+ * etc., so the sidebar counts).
+ */
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div data-slot="table-container" className="@container relative w-full">
       <table
         data-slot="table"
         className={cn('w-full caption-bottom text-sm', className)}
@@ -50,12 +55,17 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
+function TableHead({
+  className,
+  grow = false,
+  ...props
+}: React.ComponentProps<'th'> & { grow?: boolean }) {
   return (
     <th
       data-slot="table-head"
       className={cn(
-        'h-10 whitespace-nowrap px-2 text-left align-middle font-medium text-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        grow && 'w-full max-w-0',
+        'h-10 whitespace-nowrap px-3 text-left align-middle font-normal text-muted-foreground text-xs [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         className,
       )}
       {...props}
@@ -63,12 +73,18 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
   )
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
+/** `grow`: takes the room left and gives it back first; wrap its text in `truncate`. */
+function TableCell({
+  className,
+  grow = false,
+  ...props
+}: React.ComponentProps<'td'> & { grow?: boolean }) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
-        'whitespace-nowrap p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
+        grow && 'w-full max-w-0',
+        'whitespace-nowrap px-3 py-2.5 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]',
         className,
       )}
       {...props}

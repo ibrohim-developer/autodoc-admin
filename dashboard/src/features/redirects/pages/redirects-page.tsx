@@ -228,12 +228,12 @@ export function RedirectsPage() {
         </div>
       ) : null}
       {items.length > 0 ? (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Старый адрес → новый</TableHead>
-                <TableHead className="hidden sm:table-cell">Тип</TableHead>
+                <TableHead grow>Старый адрес → новый</TableHead>
+                <TableHead className="@xl:table-cell hidden">Тип</TableHead>
                 <TableHead>Работает</TableHead>
                 <TableHead className="w-24" />
               </TableRow>
@@ -243,7 +243,7 @@ export function RedirectsPage() {
                 const redirect = fieldsOf(item)
                 return (
                   <TableRow key={item.id}>
-                    <TableCell className="max-w-md whitespace-normal">
+                    <TableCell grow className="whitespace-normal">
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-sm [overflow-wrap:anywhere]">
                         {redirect.from}
                         <ArrowRight
@@ -258,7 +258,7 @@ export function RedirectsPage() {
                         ) : null}
                       </span>
                     </TableCell>
-                    <TableCell className="hidden text-muted-foreground text-sm sm:table-cell">
+                    <TableCell className="@xl:table-cell hidden text-muted-foreground text-sm">
                       {redirect.permanent ? '301' : '302'}
                     </TableCell>
                     <TableCell>

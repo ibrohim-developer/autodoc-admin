@@ -44,23 +44,25 @@ export function ContentTab({ period }: { period: PeriodQuery }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Новость</TableHead>
+                  <TableHead grow>Новость</TableHead>
                   <TableHead className="text-right">Просмотры</TableHead>
-                  <TableHead className="text-right">Читатели</TableHead>
-                  <TableHead className="text-right">Время чтения</TableHead>
+                  <TableHead className="@xl:table-cell hidden text-right">Читатели</TableHead>
+                  <TableHead className="@2xl:table-cell hidden text-right">Время чтения</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
                   <TableRow key={post.id}>
-                    <TableCell className="max-w-96 truncate">{post.title}</TableCell>
+                    <TableCell grow className="truncate" title={post.title}>
+                      {post.title}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCount(post.views)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="@xl:table-cell hidden text-right tabular-nums">
                       {formatCount(post.visitors)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="@2xl:table-cell hidden text-right tabular-nums">
                       {formatDuration(post.avgSeconds)}
                     </TableCell>
                   </TableRow>

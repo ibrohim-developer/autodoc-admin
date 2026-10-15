@@ -52,9 +52,9 @@ export function VacanciesTab({ period }: { period: PeriodQuery }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Вакансия</TableHead>
+                  <TableHead grow>Вакансия</TableHead>
                   <TableHead className="text-right">Просмотры</TableHead>
-                  <TableHead className="text-right">Посетители</TableHead>
+                  <TableHead className="@xl:table-cell hidden text-right">Посетители</TableHead>
                   <TableHead className="text-right">Отклики</TableHead>
                   <TableHead className="text-right">Конверсия</TableHead>
                 </TableRow>
@@ -62,18 +62,25 @@ export function VacanciesTab({ period }: { period: PeriodQuery }) {
               <TableBody>
                 {vacancies.map((vacancy) => (
                   <TableRow key={vacancy.id}>
-                    <TableCell className="max-w-80 truncate">
-                      {vacancy.title}
-                      {vacancy.closed ? (
-                        <Badge variant="outline" className="ml-2 font-normal text-muted-foreground">
-                          Закрыта
-                        </Badge>
-                      ) : null}
+                    <TableCell grow>
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate" title={vacancy.title}>
+                          {vacancy.title}
+                        </span>
+                        {vacancy.closed ? (
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 font-normal text-muted-foreground"
+                          >
+                            Закрыта
+                          </Badge>
+                        ) : null}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCount(vacancy.views)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="@xl:table-cell hidden text-right tabular-nums">
                       {formatCount(vacancy.visitors)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">

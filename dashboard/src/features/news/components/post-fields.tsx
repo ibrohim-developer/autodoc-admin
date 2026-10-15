@@ -20,7 +20,7 @@ import { cn } from '@/lib/cn'
 import type { Locale } from '@/lib/media'
 import { type PostForm, postExcerpt } from '../api/post-form'
 import { useCategoryOptions } from '../hooks/use-categories'
-import { PostBlocks } from './post-blocks'
+import { PostSections } from './post-sections'
 
 const TITLE_PLACEHOLDER: Record<Locale, string> = {
   uz: 'Sarlavha',
@@ -83,7 +83,7 @@ export function PostLocaleFields({ locale, resetKey }: EditorContext) {
           hint="Без обрезки по рамке баннера."
         />
       </Card>
-      <PostBlocks locale={locale} resetKey={resetKey} />
+      <PostSections locale={locale} resetKey={resetKey} />
     </>
   )
 }

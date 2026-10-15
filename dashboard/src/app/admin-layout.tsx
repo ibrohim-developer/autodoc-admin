@@ -20,7 +20,7 @@ import { navFor } from './navigation'
 function Brand({ dark = true }: { dark?: boolean }) {
   return (
     <Link to="/" className="flex items-center gap-2.5 px-2.5 pt-1 pb-5">
-      <span className="grid size-7 place-items-center rounded-[7px] bg-[#2449d8] font-bold text-sm text-white">
+      <span className="grid size-7 place-items-center rounded-[7px] bg-primary font-bold text-primary-foreground text-sm">
         A
       </span>
       <span className="flex flex-col leading-tight">
@@ -106,7 +106,7 @@ function UserMenu({ me }: { me: Me }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-2.5 rounded-[7px] p-2.5 text-left outline-none transition-colors hover:bg-sidebar-active focus-visible:ring-2 focus-visible:ring-[#2449d8]"
+          className="flex w-full items-center gap-2.5 rounded-[7px] p-2.5 text-left outline-none transition-colors hover:bg-sidebar-active focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#3a3a3f] text-white text-xs">
             {initials(me.name)}

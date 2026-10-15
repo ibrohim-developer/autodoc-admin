@@ -37,7 +37,7 @@ export function VacanciesListPage() {
         columns={[
           {
             header: 'Направление',
-            className: 'hidden lg:table-cell',
+            className: 'hidden @4xl:table-cell',
             cell: (item) =>
               typeof item.shared.directionId === 'string'
                 ? (names.get(item.shared.directionId) ?? '—')
@@ -45,12 +45,12 @@ export function VacanciesListPage() {
           },
           {
             header: 'Занятость',
-            className: 'hidden xl:table-cell text-sm',
+            className: 'hidden @5xl:table-cell text-sm',
             cell: (item) => EMPLOYMENT[item.shared.employment as Employment] ?? '—',
           },
           {
             header: 'Набор',
-            className: 'hidden sm:table-cell',
+            className: 'hidden @xl:table-cell',
             cell: (item) =>
               item.shared.closed === true ? (
                 <Badge variant="outline" className="font-normal text-muted-foreground">

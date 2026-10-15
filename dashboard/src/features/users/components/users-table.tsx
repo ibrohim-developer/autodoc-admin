@@ -101,15 +101,15 @@ export function UsersTable({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-hidden rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Сотрудник</TableHead>
-              <TableHead>Роль</TableHead>
+              <TableHead grow>Сотрудник</TableHead>
+              <TableHead className="@xl:table-cell hidden">Роль</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead>2FA</TableHead>
-              <TableHead>Последний вход</TableHead>
+              <TableHead className="@2xl:table-cell hidden">2FA</TableHead>
+              <TableHead className="@4xl:table-cell hidden">Последний вход</TableHead>
               <TableHead className="w-12">
                 <span className="sr-only">Действия</span>
               </TableHead>
@@ -121,27 +121,27 @@ export function UsersTable({
                 key={user.id}
                 className={user.status === 'disabled' ? 'opacity-60' : undefined}
               >
-                <TableCell>
-                  <div className="font-medium">
+                <TableCell grow>
+                  <div className="truncate font-medium">
                     {user.name}
                     {user.id === me.id ? (
                       <span className="ml-2 font-normal text-muted-foreground text-xs">это вы</span>
                     ) : null}
                   </div>
-                  <div className="text-muted-foreground text-xs">{user.email}</div>
+                  <div className="truncate text-muted-foreground text-xs">{user.email}</div>
                 </TableCell>
-                <TableCell>{user.roleLabel}</TableCell>
+                <TableCell className="@xl:table-cell hidden">{user.roleLabel}</TableCell>
                 <TableCell>
                   <Badge variant={STATUS[user.status].variant}>{STATUS[user.status].label}</Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="@2xl:table-cell hidden">
                   {user.totpEnabled ? (
                     <Badge>включена</Badge>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
+                <TableCell className="@4xl:table-cell hidden text-muted-foreground">
                   {formatDateTime(user.lastLoginAt, 'ещё не входил')}
                 </TableCell>
                 <TableCell>

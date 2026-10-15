@@ -20,8 +20,10 @@
   --color-popover: #ffffff;
   --color-popover-foreground: #17171a;
 
-  --color-primary: #2449d8;
+  /* The Autodoc brand green from the public site. */
+  --color-primary: #2f8a3d;
   --color-primary-foreground: #ffffff;
+  --color-primary-soft: #e8f3ea;
 
   --color-secondary: #efeeea;
   --color-secondary-foreground: #17171a;
@@ -39,7 +41,7 @@
 
   --color-border: #e6e5e1;
   --color-input: #e6e5e1;
-  --color-ring: #2449d8;
+  --color-ring: #2f8a3d;
 
   /* Status pills. */
   --color-success: #1f7a45;
@@ -71,8 +73,9 @@
   --color-popover: #1b1b1e;
   --color-popover-foreground: #e9e8e4;
 
-  --color-primary: #5b7cf0;
-  --color-primary-foreground: #ffffff;
+  --color-primary: #57b13c;
+  --color-primary-foreground: #0f1f0c;
+  --color-primary-soft: #1c3320;
 
   --color-secondary: #26262a;
   --color-secondary-foreground: #e9e8e4;
@@ -88,7 +91,7 @@
 
   --color-border: #2c2c30;
   --color-input: #2c2c30;
-  --color-ring: #5b7cf0;
+  --color-ring: #57b13c;
 
   --color-success: #6fcf97;
   --color-success-soft: #1d3326;

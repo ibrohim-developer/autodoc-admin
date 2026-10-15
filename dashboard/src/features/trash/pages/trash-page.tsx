@@ -81,16 +81,16 @@ export function TrashPage() {
       ) : null}
 
       {trash.data && trash.data.items.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Что</TableHead>
-                <TableHead>Раздел</TableHead>
-                <TableHead>Удалил(а)</TableHead>
-                <TableHead>Когда</TableHead>
+                <TableHead grow>Что</TableHead>
+                <TableHead className="@2xl:table-cell hidden">Раздел</TableHead>
+                <TableHead className="@5xl:table-cell hidden">Удалил(а)</TableHead>
+                <TableHead className="@4xl:table-cell hidden">Когда</TableHead>
                 <TableHead>Удалится навсегда</TableHead>
-                <TableHead className="w-56">
+                <TableHead>
                   <span className="sr-only">Действия</span>
                 </TableHead>
               </TableRow>
@@ -98,26 +98,32 @@ export function TrashPage() {
             <TableBody>
               {trash.data.items.map((item) => (
                 <TableRow key={`${item.kind}-${item.id}`}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
+                  <TableCell grow>
+                    <div className="flex min-w-0 items-center gap-3">
                       {item.thumbUrl ? (
-                        <img src={item.thumbUrl} alt="" className="size-10 rounded object-cover" />
+                        <img
+                          src={item.thumbUrl}
+                          alt=""
+                          className="size-10 shrink-0 rounded object-cover"
+                        />
                       ) : (
-                        <span className="grid size-10 place-items-center rounded bg-muted">
+                        <span className="grid size-10 shrink-0 place-items-center rounded bg-muted">
                           <FileText className="size-4 text-muted-foreground" aria-hidden="true" />
                         </span>
                       )}
-                      <span className="font-medium">{item.title}</span>
+                      <span className="truncate font-medium" title={item.title}>
+                        {item.title}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>{item.typeLabel}</TableCell>
-                  <TableCell>{item.deletedBy?.name ?? '—'}</TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                  <TableCell className="@2xl:table-cell hidden">{item.typeLabel}</TableCell>
+                  <TableCell className="@5xl:table-cell hidden">
+                    {item.deletedBy?.name ?? '—'}
+                  </TableCell>
+                  <TableCell className="@4xl:table-cell hidden text-muted-foreground">
                     {formatDateTime(item.deletedAt)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {daysLeft(item.purgeAt)}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{daysLeft(item.purgeAt)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       <Button
@@ -127,7 +133,7 @@ export function TrashPage() {
                         disabled={restore.isPending}
                       >
                         <RotateCcw aria-hidden="true" />
-                        Восстановить
+                        <span className="@max-2xl:sr-only">Восстановить</span>
                       </Button>
                       <Button
                         size="sm"
