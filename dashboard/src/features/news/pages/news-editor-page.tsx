@@ -3,12 +3,18 @@ import { DocumentEditor } from '@/components/content/document-editor'
 import { emptyPost, postFromData, postHasLocale, postToData } from '../api/post-form'
 import { PostLocaleFields, PostSidebar } from '../components/post-fields'
 
-/** "locales.uz.blocks.<id>.text…" and "shared.blocks.2.url": the block's own field. */
+/**
+ * The API reports the article's fields by their stored blocks ("locales.uz.blocks.text.text",
+ * "shared.blocks.1.items"); the form has them as sections.
+ */
 function fieldOfIssue(path: string): string {
   const parts = path.split('.')
-  if (parts[0] === 'locales' && parts[2] === 'blocks') return parts.slice(0, 5).join('.')
-  if (parts[0] === 'shared' && parts[1] === 'blocks' && parts.length > 3) {
-    return parts.slice(0, 4).join('.')
+  if (parts[0] === 'locales' && parts[2] === 'blocks') return `locales.${parts[1]}.text`
+  if (parts[0] === 'shared' && parts[1] === 'blocks') {
+    if (parts.includes('items')) return 'shared.gallery'
+    if (parts.includes('url')) return 'shared.videoUrl'
+    // "Добавьте текст материала": nothing in the article yet.
+    return 'locales.uz.text'
   }
   return (parts[0] === 'locales' ? parts.slice(0, 3) : parts.slice(0, 2)).join('.')
 }
