@@ -4,7 +4,8 @@ What we are building, in what order, and where each stage stands. Updated at the
 stage. How to run things is in the [README](../README.md).
 
 **Goal:** marketing and HR update autodoc.uz without a developer, handle form submissions and
-job applications, and see site statistics. Based on the spec «ТЗ: админ-панель сайта autodoc.uz».
+job applications, and see site statistics. Based on the spec «ТЗ: админ-панель сайта autodoc.uz»
+([SPEC.md](SPEC.md)).
 
 ## Status
 
