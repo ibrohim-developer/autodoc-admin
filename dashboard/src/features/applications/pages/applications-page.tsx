@@ -186,16 +186,18 @@ export function ApplicationsPage() {
       ) : null}
 
       {list.data && list.data.items.length > 0 ? (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16">№</TableHead>
                 <TableHead>Кандидат</TableHead>
-                <TableHead>Вакансия</TableHead>
+                <TableHead grow className="@xl:table-cell hidden">
+                  Вакансия
+                </TableHead>
                 <TableHead>Статус</TableHead>
-                <TableHead className="hidden lg:table-cell">Источник</TableHead>
-                <TableHead className="hidden md:table-cell">Получен</TableHead>
+                <TableHead className="@4xl:table-cell hidden">Источник</TableHead>
+                <TableHead className="@2xl:table-cell hidden">Получен</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,7 +223,7 @@ export function ApplicationsPage() {
                       ) : null}
                     </p>
                   </TableCell>
-                  <TableCell className="max-w-72 truncate font-normal">
+                  <TableCell grow className="@xl:table-cell hidden truncate font-normal">
                     {application.vacancy?.title ?? (
                       <span className="text-muted-foreground">Другая позиция</span>
                     )}
@@ -232,10 +234,10 @@ export function ApplicationsPage() {
                       label={APPLICATION_STATUS_LABELS[application.status]}
                     />
                   </TableCell>
-                  <TableCell className="hidden font-normal text-sm lg:table-cell">
+                  <TableCell className="@4xl:table-cell hidden font-normal text-sm">
                     {application.sourceLabel}
                   </TableCell>
-                  <TableCell className="hidden font-normal text-muted-foreground text-sm md:table-cell">
+                  <TableCell className="@2xl:table-cell hidden font-normal text-muted-foreground text-sm">
                     {formatDateTime(application.createdAt)}
                   </TableCell>
                 </TableRow>

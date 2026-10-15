@@ -170,14 +170,16 @@ export function AuditPage() {
       ) : null}
 
       {list.data && list.data.items.length > 0 ? (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-44">Когда</TableHead>
-                <TableHead>Кто</TableHead>
+                <TableHead className="@2xl:table-cell hidden">Кто</TableHead>
                 <TableHead>Действие</TableHead>
-                <TableHead className="hidden lg:table-cell">Что</TableHead>
+                <TableHead grow className="@4xl:table-cell hidden">
+                  Что
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -190,7 +192,9 @@ export function AuditPage() {
                       <TableCell className="text-muted-foreground text-sm">
                         {formatDateTime(entry.createdAt)}
                       </TableCell>
-                      <TableCell className="text-sm">{entry.userEmail ?? '—'}</TableCell>
+                      <TableCell className="@2xl:table-cell hidden text-sm">
+                        {entry.userEmail ?? '—'}
+                      </TableCell>
                       <TableCell className="whitespace-normal">
                         <button
                           type="button"
@@ -200,9 +204,9 @@ export function AuditPage() {
                         >
                           {ACTION_LABELS[entry.action] ?? entry.action}
                         </button>
-                        <p className="text-muted-foreground text-xs lg:hidden">{entry.summary}</p>
+                        <p className="@4xl:hidden text-muted-foreground text-xs">{entry.summary}</p>
                       </TableCell>
-                      <TableCell className="hidden max-w-96 truncate text-sm lg:table-cell">
+                      <TableCell grow className="@4xl:table-cell hidden truncate text-sm">
                         {link && entry.summary ? (
                           <Link to={link} className="hover:underline">
                             {entry.summary}

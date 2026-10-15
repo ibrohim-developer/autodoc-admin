@@ -48,7 +48,11 @@ const tabOf = (value: string | null): Tab => TABS.find((tab) => tab.key === valu
 const dateFormat = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeZone: 'UTC' })
 const views = new Intl.NumberFormat('ru-RU')
 
-const COLUMNS = 'grid-cols-[minmax(0,1fr)_150px_110px_84px_120px_72px]'
+/** Columns drop out as the list narrows (languages, views, date): it never scrolls sideways. */
+const COLUMNS =
+  'grid-cols-[minmax(0,1fr)_130px_72px] @xl:grid-cols-[minmax(0,1fr)_130px_110px_72px] @2xl:grid-cols-[minmax(0,1fr)_140px_84px_110px_72px] @4xl:grid-cols-[minmax(0,1fr)_140px_110px_84px_120px_72px]'
+const TRASH_COLUMNS =
+  'grid-cols-[minmax(0,1fr)_auto] @2xl:grid-cols-[minmax(0,1fr)_150px_auto] @4xl:grid-cols-[minmax(0,1fr)_150px_150px_auto]'
 
 /** Новости и блог: tabs by state, search, category filter, and pin / trash right in the row. */
 export function NewsListPage() {
@@ -214,11 +218,9 @@ export function NewsListPage() {
 
 function Frame({ header, children }: { header: ReactNode; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl border bg-card">
-      <div className="min-w-[820px]">
-        {header}
-        {children}
-      </div>
+    <div className="@container overflow-hidden rounded-xl border bg-card">
+      {header}
+      {children}
     </div>
   )
 }
@@ -250,9 +252,9 @@ function PostTable({
         >
           <span>Материал</span>
           <span>Статус</span>
-          <span>Языки</span>
-          <span className="text-right">Просмотры</span>
-          <span>Дата</span>
+          <span className="@4xl:block hidden">Языки</span>
+          <span className="@2xl:block hidden text-right">Просмотры</span>
+          <span className="@xl:block hidden">Дата</span>
           <span className="sr-only">Действия</span>
         </div>
       }
@@ -354,12 +356,13 @@ function PostRow({
         <div className="min-w-0 space-y-0.5">
           <div className="flex min-w-0 items-center gap-1.5">
             {pinned ? (
-              <span className="shrink-0 rounded-[4px] bg-info-soft px-1.5 py-px font-semibold text-[11px] text-info">
+              <span className="shrink-0 rounded-[4px] bg-primary-soft px-1.5 py-px font-semibold text-[11px] text-primary">
                 Закреплено
               </span>
             ) : null}
             <Link
               to={`/news/${item.id}`}
+              title={title}
               className="truncate font-medium text-sm hover:underline focus-visible:underline"
             >
               {title}
@@ -377,7 +380,7 @@ function PostRow({
           <p className="text-muted-foreground text-xs">{formatDateTime(item.scheduledAt)}</p>
         ) : null}
       </div>
-      <div className="flex gap-1">
+      <div className="@4xl:flex hidden gap-1">
         {LOCALES.map((locale) => {
           const filled = item.locales.includes(locale)
           return (
@@ -395,10 +398,10 @@ function PostRow({
           )
         })}
       </div>
-      <span className="text-right text-sm tabular-nums">
+      <span className="@2xl:block hidden text-right text-sm tabular-nums">
         {count === null || count === 0 ? '—' : views.format(count)}
       </span>
-      <span className="text-[13px] text-muted-foreground">
+      <span className="@xl:block hidden text-[13px] text-muted-foreground">
         {typeof item.shared.date === 'string' ? dateFormat.format(new Date(item.shared.date)) : '—'}
       </span>
       <div className="flex justify-end gap-0.5">
@@ -453,10 +456,15 @@ function TrashTab({
   return (
     <Frame
       header={
-        <div className="grid grid-cols-[minmax(0,1fr)_160px_160px_120px] gap-4 border-b px-4 py-2.5 text-muted-foreground text-xs">
+        <div
+          className={cn(
+            'grid gap-4 border-b px-4 py-2.5 text-muted-foreground text-xs',
+            TRASH_COLUMNS,
+          )}
+        >
           <span>Материал</span>
-          <span>Удалено</span>
-          <span>Удалится навсегда</span>
+          <span className="@4xl:block hidden">Удалено</span>
+          <span className="@2xl:block hidden">Удалится навсегда</span>
           <span className="sr-only">Действия</span>
         </div>
       }
@@ -472,7 +480,10 @@ function TrashTab({
       {items.map((item) => (
         <div
           key={item.id}
-          className="grid grid-cols-[minmax(0,1fr)_160px_160px_120px] items-center gap-4 border-b px-4 py-3 last:border-b-0"
+          className={cn(
+            'grid items-center gap-4 border-b px-4 py-3 last:border-b-0',
+            TRASH_COLUMNS,
+          )}
         >
           <div className="flex min-w-0 items-center gap-3">
             {item.thumbUrl ? (
@@ -485,16 +496,20 @@ function TrashTab({
               <div className="h-10 w-14 shrink-0 rounded-md bg-muted" aria-hidden="true" />
             )}
             <div className="min-w-0">
-              <p className="truncate font-medium text-sm">{item.title || 'Без названия'}</p>
+              <p className="truncate font-medium text-sm" title={item.title}>
+                {item.title || 'Без названия'}
+              </p>
               {item.deletedBy ? (
                 <p className="text-muted-foreground text-xs">{item.deletedBy.name}</p>
               ) : null}
             </div>
           </div>
-          <span className="text-[13px] text-muted-foreground">
+          <span className="@4xl:block hidden text-[13px] text-muted-foreground">
             {formatDateTime(item.deletedAt)}
           </span>
-          <span className="text-[13px] text-muted-foreground">{formatDateTime(item.purgeAt)}</span>
+          <span className="@2xl:block hidden text-[13px] text-muted-foreground">
+            {formatDateTime(item.purgeAt)}
+          </span>
           <div className="flex justify-end">
             <Button
               variant="outline"
@@ -509,7 +524,7 @@ function TrashTab({
               }
             >
               <RotateCcw aria-hidden="true" />
-              Восстановить
+              <span className="@max-2xl:sr-only">Восстановить</span>
             </Button>
           </div>
         </div>

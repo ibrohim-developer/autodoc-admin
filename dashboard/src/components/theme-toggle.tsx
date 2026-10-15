@@ -1,7 +1,6 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { type Theme, useThemeStore } from '@/stores/theme-store'
-import { Button } from './ui/button'
 
 const OPTIONS: ReadonlyArray<{ value: Theme; label: string; Icon: typeof Sun }> = [
   { value: 'light', label: 'Светлая тема', Icon: Sun },
@@ -9,7 +8,10 @@ const OPTIONS: ReadonlyArray<{ value: Theme; label: string; Icon: typeof Sun }> 
   { value: 'system', label: 'Как в системе', Icon: Monitor },
 ]
 
-/** `onDark`: sits on the dark sidebar, so its colours don't follow the page theme. */
+/**
+ * Light / dark / system as one row of three equal buttons. `onDark`: sits on the dark sidebar,
+ * so its colours don't follow the page theme.
+ */
 export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
@@ -17,31 +19,36 @@ export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
   return (
     <fieldset
       className={cn(
-        'inline-flex items-center gap-1 rounded-lg border p-1',
-        onDark ? 'border-sidebar-border' : 'border-border',
+        'm-0 grid w-full min-w-0 grid-cols-3 gap-0.5 rounded-lg border-0 p-0.5',
+        onDark ? 'bg-sidebar-active/60' : 'bg-muted',
       )}
     >
       <legend className="sr-only">Тема оформления</legend>
-      {OPTIONS.map(({ value, label, Icon }) => (
-        <Button
-          key={value}
-          type="button"
-          size="icon"
-          variant={theme === value ? 'secondary' : 'ghost'}
-          aria-label={label}
-          aria-pressed={theme === value}
-          onClick={() => setTheme(value)}
-          className={cn(
-            'size-7',
-            onDark &&
-              (theme === value
-                ? 'bg-sidebar-active text-white hover:bg-sidebar-active'
-                : 'text-sidebar-muted hover:bg-sidebar-active hover:text-white'),
-          )}
-        >
-          <Icon aria-hidden="true" />
-        </Button>
-      ))}
+      {OPTIONS.map(({ value, label, Icon }) => {
+        const active = theme === value
+        return (
+          <button
+            key={value}
+            type="button"
+            aria-label={label}
+            aria-pressed={active}
+            title={label}
+            onClick={() => setTheme(value)}
+            className={cn(
+              'grid h-7 place-items-center rounded-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary [&_svg]:size-4',
+              onDark
+                ? active
+                  ? 'bg-[#3a3a3f] text-white'
+                  : 'text-sidebar-muted hover:text-white'
+                : active
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <Icon aria-hidden="true" />
+          </button>
+        )
+      })}
     </fieldset>
   )
 }

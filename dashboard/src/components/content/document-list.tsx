@@ -137,31 +137,32 @@ export function DocumentList({
       ) : null}
 
       {list.data && list.data.items.length > 0 ? (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Название</TableHead>
+                <TableHead grow>Название</TableHead>
                 {columns.map((column) => (
                   <TableHead key={column.header} className={column.className}>
                     {column.header}
                   </TableHead>
                 ))}
                 <TableHead>Статус</TableHead>
-                <TableHead className="hidden md:table-cell">Изменено</TableHead>
+                <TableHead className="@2xl:table-cell hidden">Изменено</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {list.data.items.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="max-w-96 whitespace-normal">
+                  <TableCell grow>
                     <Link
                       to={`${basePath}/${item.id}`}
-                      className="font-medium hover:underline focus-visible:underline"
+                      title={item.title}
+                      className="block truncate font-medium hover:underline focus-visible:underline"
                     >
                       {item.title || 'Без названия'}
                     </Link>
-                    <p className="mt-0.5 text-muted-foreground text-xs">
+                    <p className="mt-0.5 truncate text-muted-foreground text-xs">
                       {item.locales.map((locale) => LOCALE_LABELS[locale]).join(' · ')}
                     </p>
                   </TableCell>
@@ -178,7 +179,7 @@ export function DocumentList({
                       </p>
                     ) : null}
                   </TableCell>
-                  <TableCell className="hidden text-muted-foreground text-sm md:table-cell">
+                  <TableCell className="@2xl:table-cell hidden text-muted-foreground text-sm">
                     {formatDateTime(item.updatedAt)}
                     {item.updatedBy ? <p className="text-xs">{item.updatedBy.name}</p> : null}
                   </TableCell>

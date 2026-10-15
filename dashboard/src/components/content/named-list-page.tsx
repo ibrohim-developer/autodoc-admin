@@ -247,22 +247,26 @@ export function NamedListPage({
         </div>
       ) : null}
       {items.length > 0 ? (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Название</TableHead>
+                <TableHead grow>Название</TableHead>
                 <TableHead>Порядок</TableHead>
-                <TableHead>Переводы</TableHead>
+                <TableHead className="@xl:table-cell hidden">Переводы</TableHead>
                 <TableHead className="w-24" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.title}</TableCell>
+                  <TableCell grow className="font-medium">
+                    <p className="truncate" title={item.title}>
+                      {item.title}
+                    </p>
+                  </TableCell>
                   <TableCell className="tabular-nums">{String(item.shared.order ?? 0)}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="@xl:table-cell hidden text-muted-foreground text-sm">
                     {item.locales.map((locale) => LOCALE_LABELS[locale]).join(' · ')}
                   </TableCell>
                   <TableCell>

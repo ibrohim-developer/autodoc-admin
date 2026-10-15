@@ -132,15 +132,17 @@ export function LeadsPage() {
       ) : null}
 
       {list.data && list.data.items.length > 0 ? (
-        <div className="rounded-xl border">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16">№</TableHead>
                 <TableHead>Кто</TableHead>
-                <TableHead>Тема</TableHead>
+                <TableHead grow className="@xl:table-cell hidden">
+                  Тема
+                </TableHead>
                 <TableHead>Статус</TableHead>
-                <TableHead className="hidden md:table-cell">Получена</TableHead>
+                <TableHead className="@2xl:table-cell hidden">Получена</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -158,9 +160,9 @@ export function LeadsPage() {
                     </Link>
                     <p className="font-normal text-muted-foreground text-xs">{lead.phone}</p>
                   </TableCell>
-                  <TableCell className="max-w-80 truncate font-normal">
-                    {lead.topic ?? lead.message ?? '—'}
-                    <p className="text-muted-foreground text-xs">
+                  <TableCell grow className="@xl:table-cell hidden font-normal">
+                    <p className="truncate">{lead.topic ?? lead.message ?? '—'}</p>
+                    <p className="truncate text-muted-foreground text-xs">
                       {lead.formLabel} · {lead.locale.toUpperCase()}
                     </p>
                   </TableCell>
@@ -170,7 +172,7 @@ export function LeadsPage() {
                       label={LEAD_STATUS_LABELS[lead.status]}
                     />
                   </TableCell>
-                  <TableCell className="hidden font-normal text-muted-foreground text-sm md:table-cell">
+                  <TableCell className="@2xl:table-cell hidden font-normal text-muted-foreground text-sm">
                     {formatDateTime(lead.createdAt)}
                   </TableCell>
                 </TableRow>

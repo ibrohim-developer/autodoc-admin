@@ -138,16 +138,16 @@ export function OverviewTab({ period }: { period: PeriodQuery }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Страница</TableHead>
+                  <TableHead grow>Страница</TableHead>
                   <TableHead className="text-right">Просмотры</TableHead>
                   <TableHead className="text-right">Посетители</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">Время</TableHead>
+                  <TableHead className="@xl:table-cell hidden text-right">Время</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.pages.map((row) => (
                   <TableRow key={row.path}>
-                    <TableCell className="max-w-96 truncate font-mono text-xs">
+                    <TableCell grow className="truncate font-mono text-xs">
                       {row.path}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -156,7 +156,7 @@ export function OverviewTab({ period }: { period: PeriodQuery }) {
                     <TableCell className="text-right tabular-nums">
                       {formatCount(row.visitors)}
                     </TableCell>
-                    <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                    <TableCell className="@xl:table-cell hidden text-right tabular-nums">
                       {formatDuration(row.avgSeconds)}
                     </TableCell>
                   </TableRow>
