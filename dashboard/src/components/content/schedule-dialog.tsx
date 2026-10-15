@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { DatePicker, TimePicker } from '@/components/date-picker'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 // Tashkent is UTC+5 all year: no daylight saving to account for.
@@ -61,13 +61,21 @@ export function ScheduleDialog({
         </DialogHeader>
         <div className="space-y-1.5">
           <Label htmlFor={id}>Дата и время (Ташкент)</Label>
-          <Input
-            id={id}
-            type="datetime-local"
-            value={value}
-            min={toTashkentInput(new Date(Date.now() + 2 * 60_000))}
-            onChange={(event) => setValue(event.target.value)}
-          />
+          <div className="flex gap-2">
+            <DatePicker
+              id={id}
+              value={value.slice(0, 10)}
+              min={toTashkentInput(new Date()).slice(0, 10)}
+              onChange={(date) => setValue(`${date}T${value.slice(11, 16) || '10:00'}`)}
+              className="flex-1"
+            />
+            <TimePicker
+              aria-label="Время"
+              value={value.slice(11, 16)}
+              onChange={(time) => setValue(`${value.slice(0, 10)}T${time}`)}
+              className="w-32"
+            />
+          </div>
           {tooSoon ? (
             <p className="text-destructive text-xs">Выберите время хотя бы на минуту позже.</p>
           ) : null}

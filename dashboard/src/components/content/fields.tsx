@@ -1,6 +1,7 @@
 import { Plus, X } from 'lucide-react'
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useController, useFormContext, useWatch } from 'react-hook-form'
+import { DatePicker } from '@/components/date-picker'
 import { RichTextEditor } from '@/components/rich-text/rich-text-editor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -192,11 +193,18 @@ export function DateField({
   hint?: ReactNode
 }) {
   const id = useId()
-  const { register } = useFormContext()
+  const { field } = useController({ name })
   const error = useFieldError(name)
   return (
     <Field id={id} label={label} required={required} hint={hint} error={error}>
-      <Input id={id} type="date" {...register(name)} aria-invalid={error ? true : undefined} />
+      <DatePicker
+        id={id}
+        value={typeof field.value === 'string' ? field.value : ''}
+        onChange={field.onChange}
+        onBlur={field.onBlur}
+        clearable={!required}
+        invalid={Boolean(error)}
+      />
     </Field>
   )
 }

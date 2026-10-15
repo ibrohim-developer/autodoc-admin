@@ -11,12 +11,14 @@ import {
   useFieldError,
 } from '@/components/content/fields'
 import { MediaField } from '@/components/content/media-fields'
+import { DatePicker, TimePicker } from '@/components/date-picker'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
+import { todayInTashkent } from '@/lib/content'
 import type { Locale } from '@/lib/media'
 import { type PostForm, postExcerpt } from '../api/post-form'
 import { useCategoryOptions } from '../hooks/use-categories'
@@ -149,18 +151,17 @@ function ScheduleControl({ schedule }: { schedule: EditorContext['schedule'] }) 
       </div>
       {on ? (
         <div className="flex gap-2">
-          <Input
-            type="date"
+          <DatePicker
             aria-label="Дата публикации"
             value={draft.date}
-            onChange={(event) => update({ ...draft, date: event.target.value })}
+            min={todayInTashkent()}
+            onChange={(date) => update({ ...draft, date })}
             className="min-w-0 flex-1"
           />
-          <Input
-            type="time"
+          <TimePicker
             aria-label="Время публикации"
             value={draft.time}
-            onChange={(event) => update({ ...draft, time: event.target.value })}
+            onChange={(time) => update({ ...draft, time })}
             className="w-28"
           />
         </div>

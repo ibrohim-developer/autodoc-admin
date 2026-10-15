@@ -1,4 +1,4 @@
-import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/date-picker'
 
 export type Period = { from: string; to: string }
 
@@ -12,22 +12,24 @@ export function PeriodFilter({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <Input
-        type="date"
+      <DatePicker
         aria-label="С даты"
+        placeholder="С даты"
         value={value.from}
         max={value.to || undefined}
-        onChange={(event) => onChange({ ...value, from: event.target.value })}
-        className="w-40"
+        clearable
+        onChange={(from) => onChange({ ...value, from })}
+        className="w-44"
       />
       <span className="text-muted-foreground text-sm">—</span>
-      <Input
-        type="date"
+      <DatePicker
         aria-label="По дату"
+        placeholder="По дату"
         value={value.to}
         min={value.from || undefined}
-        onChange={(event) => onChange({ ...value, to: event.target.value })}
-        className="w-40"
+        clearable
+        onChange={(to) => onChange({ ...value, to })}
+        className="w-44"
       />
     </div>
   )
