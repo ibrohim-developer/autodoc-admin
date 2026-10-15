@@ -6,7 +6,6 @@ import { EMPTY_DOC, type RichTextDoc } from '@/lib/rich-text'
 /** A news post as the form holds it. The API's rules: api/src/site-content/news.ts. */
 export type PostLocale = {
   title: string
-  excerpt: string
   body: RichTextDoc
   tags: string[]
   seoTitle: string
@@ -46,7 +45,6 @@ const doc = (value: unknown): RichTextDoc =>
 
 const emptyLocale = (): PostLocale => ({
   title: '',
-  excerpt: '',
   body: EMPTY_DOC,
   tags: [],
   seoTitle: '',
@@ -77,7 +75,6 @@ export function postFromData(data: DocumentData): PostForm {
     const fields = data.locales[code] ?? {}
     return {
       title: text(fields.title),
-      excerpt: text(fields.excerpt),
       body: doc(fields.body),
       tags: Array.isArray(fields.tags) ? fields.tags.filter((tag) => typeof tag === 'string') : [],
       seoTitle: text(fields.seoTitle),

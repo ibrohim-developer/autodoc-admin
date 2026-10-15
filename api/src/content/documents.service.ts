@@ -706,7 +706,10 @@ export class DocumentsService {
     const keep = only ? new Set([...(only.shared ?? []), ...(only.localized ?? [])]) : null
     const localized = rows.map((row) => {
       const data = (draft ? row.draft : row.published) as DocumentData
-      const { fields, translated } = localize(data, locale)
+      const localizedFields = localize(data, locale)
+      const translated = localizedFields.translated
+      const computed = this.registry.find(row.type)?.computed?.(localizedFields.fields) ?? {}
+      const fields = { ...localizedFields.fields, ...computed }
       if (!keep) return { row, fields, translated }
       const picked = Object.fromEntries(Object.entries(fields).filter(([key]) => keep.has(key)))
       return { row, fields: picked, translated }

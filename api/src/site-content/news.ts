@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { ContentTypeDef } from '../content/content-types.js'
-import { richTextSchema } from '../content/rich-text.js'
+import { excerpt, isRichText, richTextSchema, richTextToPlain } from '../content/rich-text.js'
 import {
   CONTENT,
   focalPoint,
@@ -12,6 +12,9 @@ import {
   text,
   videoUrl,
 } from './fields.js'
+
+/** Characters of the text a news card shows under its title. */
+const EXCERPT_LENGTH = 200
 
 /** Categories for the news list's filter. Saved = live: there is nothing to preview. */
 export const postCategoryType: ContentTypeDef = {
@@ -56,7 +59,6 @@ export const postType: ContentTypeDef = {
   }),
   localized: z.object({
     title: requiredText(200, 'Укажите заголовок'),
-    excerpt: text(300).optional(),
     body: richTextSchema,
     tags: z.array(requiredText(40, 'Пустой тег')).max(10, 'Не больше 10 тегов').optional(),
     seoTitle: text(120).optional(),
@@ -65,6 +67,10 @@ export const postType: ContentTypeDef = {
   title: (data) => String(data.locales.uz.title ?? ''),
   slug: (data) => String(data.shared.slug || data.locales.uz.title || ''),
   sitePath: (_data, slug, locale) => (slug ? localePath(locale, `/blog/${slug}/`) : null),
+  /** The card's lines under the title (and the SEO description fallback): the text's beginning. */
+  computed: (fields) => ({
+    excerpt: isRichText(fields.body) ? excerpt(richTextToPlain(fields.body), EXCERPT_LENGTH) : '',
+  }),
   publishCheck: (data) =>
     data.shared.cover ? [] : [{ path: 'shared.cover', message: 'Выберите обложку' }],
   order: [{ field: 'pinned', direction: 'desc', cast: 'boolean' }],

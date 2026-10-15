@@ -74,7 +74,6 @@ describe('NewsEditorPage', () => {
         locales: {
           uz: {
             title: 'Yangi kiosklar',
-            excerpt: '',
             body: EMPTY_DOC,
             tags: [],
             seoTitle: '',

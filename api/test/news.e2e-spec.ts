@@ -58,7 +58,7 @@ describe('news', () => {
   function post(title: string, shared: Record<string, unknown> = {}) {
     return {
       shared: { date: '2026-10-01', ...shared },
-      locales: { uz: { title, excerpt: `${title} haqida`, body: paragraph(`${title} matni`) } },
+      locales: { uz: { title, body: paragraph(`${title} matni`) } },
     }
   }
 
@@ -104,11 +104,14 @@ describe('news', () => {
     expect(Object.keys(item.data).sort()).toEqual(
       ['cover', 'date', 'excerpt', 'pinned', 'title'].sort(),
     )
+    // Nobody types the card's lines: they are the start of the text.
+    expect(item.data.excerpt).toBe('Muhim matni')
     expect(item.media[cover.mediaId]).toMatchObject({ width: 800, height: 600 })
 
     // The post's own page gets everything.
     const page = await siteApi('post/muhim?locale=ru').expect(200)
     expect(page.body.data.body).toEqual(paragraph('Muhim matni'))
+    expect(page.body.data.excerpt).toBe('Muhim matni')
   })
 
   it('checks the category and keeps a category in use out of the trash', async () => {

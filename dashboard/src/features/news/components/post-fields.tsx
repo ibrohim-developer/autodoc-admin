@@ -18,17 +18,10 @@ export function PostLocaleFields({ locale, resetKey }: EditorContext) {
   return (
     <>
       <TextField name={`locales.${locale}.title`} label="Заголовок" required={uz} maxLength={200} />
-      <TextField
-        name={`locales.${locale}.excerpt`}
-        label="Краткое описание"
-        hint="Две строки под заголовком в карточке новости."
-        multiline
-        rows={2}
-        maxLength={300}
-      />
       <RichTextField
         name={`locales.${locale}.body`}
         label="Текст"
+        hint="Начало текста — первые строки — показывается в карточке новости под заголовком."
         resetKey={`${resetKey}-${locale}`}
       />
       <TagsField name={`locales.${locale}.tags`} label="Теги" />
@@ -46,7 +39,7 @@ export function PostLocaleFields({ locale, resetKey }: EditorContext) {
           <TextField
             name={`locales.${locale}.seoDescription`}
             label="SEO-описание"
-            hint="Если пусто — краткое описание."
+            hint="Если пусто — начало текста."
             multiline
             rows={2}
             maxLength={300}
