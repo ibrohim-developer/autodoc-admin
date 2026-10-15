@@ -51,12 +51,15 @@ describe('NewsEditorPage', () => {
       session: meFixtures.marketing,
     })
 
-    await user.type(await screen.findByRole('textbox', { name: 'Заголовок' }), 'Yangi kiosklar')
+    await user.type(await screen.findByRole('textbox', { name: /^Заголовок/ }), 'Yangi kiosklar')
     expect(screen.getByLabelText('Адрес страницы')).toHaveValue('yangi-kiosklar')
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() => expect(router?.state.location.pathname).toBe(`/news/${ID}`))
-    expect(sentBody(fetchMock, 'POST admin/content')).toEqual({
+    const sent = sentBody(fetchMock, 'POST admin/content') as {
+      data: { shared: { blocks: { id: string }[] }; locales: Record<string, unknown> }
+    }
+    expect(sent).toEqual({
       type: 'post',
       data: {
         shared: {
@@ -66,20 +69,80 @@ describe('NewsEditorPage', () => {
           coverFull: false,
           pinned: false,
           categoryId: null,
-          gallery: [],
-          videoUrl: null,
+          // A new post starts with one empty text block.
+          blocks: [{ id: expect.any(String), type: 'text' }],
           ogImage: null,
         },
-        // Russian and English were left empty: not sent, so the site shows Uzbek.
+        // Russian and English were left empty: not sent, so the site shows Uzbek. Nor are
+        // empty blocks' texts.
         locales: {
-          uz: {
-            title: 'Yangi kiosklar',
-            excerpt: '',
-            body: EMPTY_DOC,
-            tags: [],
-            seoTitle: '',
-            seoDescription: '',
+          uz: { title: 'Yangi kiosklar', tags: [], seoTitle: '', seoDescription: '' },
+        },
+      },
+    })
+  })
+
+  it('opens a post saved before blocks as blocks, and adds, moves and removes them', async () => {
+    const fetchMock = stubApi({
+      ...noCategories,
+      [`GET admin/content/${ID}`]: {
+        body: view({
+          shared: {
+            slug: 'eski',
+            date: '2026-10-01',
+            cover: null,
+            gallery: [{ mediaId: '44444444-4444-4444-8444-444444444444' }],
+            videoUrl: 'https://youtu.be/abc',
           },
+          locales: {
+            uz: {
+              title: 'Eski',
+              body: {
+                type: 'doc',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Matn' }] }],
+              },
+            },
+          },
+        }),
+      },
+      'GET admin/media': { body: { items: [], total: 0 } },
+      [`PUT admin/content/${ID}`]: (body) => ({ body: view((body as { data: unknown }).data) }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { user } = renderWithProviders(<NewsEditorPage />, {
+      path: '/news/:id',
+      route: `/news/${ID}`,
+      session: meFixtures.marketing,
+    })
+
+    // Text, gallery, video: the old fields as three blocks.
+    expect(await screen.findByRole('button', { name: 'Удалить блок «Текст»' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Удалить блок «Галерея»' })).toBeInTheDocument()
+    expect(screen.getByText('YouTube')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Удалить блок «Галерея»' }))
+    await user.click(screen.getByRole('button', { name: 'Фото' }))
+    await user.click(screen.getByRole('button', { name: 'Блок «Видео» ниже' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([, init]) => (init as RequestInit)?.method === 'PUT')).toBe(
+        true,
+      ),
+    )
+    const { data } = sentBody(fetchMock, `PUT admin/content/${ID}`) as {
+      data: { shared: Record<string, unknown>; locales: { uz: Record<string, unknown> } }
+    }
+    const blocks = data.shared.blocks as { id: string; type: string }[]
+    expect(blocks.map((block) => block.type)).toEqual(['text', 'image', 'video'])
+    expect(data.shared).not.toHaveProperty('gallery')
+    expect(data.shared).not.toHaveProperty('videoUrl')
+    expect(data.locales.uz).not.toHaveProperty('body')
+    expect(data.locales.uz.blocks).toEqual({
+      [blocks[0]?.id as string]: {
+        text: {
+          type: 'doc',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Matn' }] }],
         },
       },
     })
@@ -122,10 +185,10 @@ describe('NewsEditorPage', () => {
       session: meFixtures.marketing,
     })
 
-    const title = await screen.findByRole('textbox', { name: 'Заголовок' })
+    const title = await screen.findByRole('textbox', { name: /^Заголовок/ })
     await waitFor(() => expect(title).toHaveValue('Yangi kiosklar'))
     await user.type(title, ' 2026')
-    await user.click(screen.getByRole('link', { name: 'Новости' }))
+    await user.click(screen.getByRole('link', { name: 'Назад: Новости и блог' }))
 
     expect(await screen.findByText('Уйти без сохранения?')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Отмена' }))
@@ -147,7 +210,7 @@ describe('NewsEditorPage', () => {
       },
     })
 
-    expect(await screen.findByRole('button', { name: 'Сохранить' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Сохранить/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Опубликовать' })).not.toBeInTheDocument()
   })
 })

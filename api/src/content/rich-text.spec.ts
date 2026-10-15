@@ -1,4 +1,5 @@
 import {
+  excerpt,
   isEmptyRichText,
   isSafeHref,
   type RichText,
@@ -150,5 +151,12 @@ describe('plain text', () => {
     expect(
       isEmptyRichText({ type: 'doc', content: [{ type: 'image', attrs: { mediaId: MEDIA_ID } }] }),
     ).toBe(false)
+  })
+})
+
+describe('excerpt', () => {
+  it('cuts a long text at a word, with an ellipsis', () => {
+    expect(excerpt('Infokiosklar Toshkent bo‘ylab o‘rnatildi', 25)).toBe('Infokiosklar Toshkent…')
+    expect(excerpt('Qisqa', 25)).toBe('Qisqa')
   })
 })

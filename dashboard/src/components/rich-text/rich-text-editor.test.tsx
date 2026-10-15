@@ -77,7 +77,7 @@ describe('RichTextEditor', () => {
     await user.click(await screen.findByRole('textbox', { name: 'Текст новости' }))
     await user.click(screen.getByRole('button', { name: 'Ссылка' }))
     await user.type(screen.getByLabelText('Адрес'), 'javascript:alert(1)')
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     expect(await screen.findByText(/Нужна ссылка вида https/)).toBeInTheDocument()
   })

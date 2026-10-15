@@ -120,3 +120,22 @@ export function trackView(): () => void {
 - The API skips bots itself, groups `/blog/<slug>/` and `/vacancies/<slug>/` (any language
   prefix) under their post or vacancy, and treats links from the site itself as internal.
 - Always `204`, also for a malformed event. Limit: 120 events a minute per address.
+
+## News article: blocks
+
+A post's page (`GET /api/v1/content/post/<slug>?locale=…`) now has `data.blocks`, the article in
+order, each block already in the visitor's language (a text or caption not yet translated comes
+from Uzbek, block by block):
+
+```ts
+type Block =
+  | { type: 'text'; id: string; body: RichText }
+  | { type: 'image'; id: string; image: { mediaId: string; … }; caption: string }
+  | { type: 'gallery'; id: string; items: { mediaId: string; … }[] }
+  | { type: 'video'; id: string; url: string } // YouTube or Instagram Reels
+```
+
+Photos are in `media` as before. Until the site renders `blocks`, the old fields are still
+there, made from the blocks: `body` (all text blocks, photos inline), `gallery` (all gallery
+photos) and `videoUrl` (the first video). `excerpt` is the start of the text, as before.
+

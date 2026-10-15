@@ -146,13 +146,24 @@ export class DocumentsService {
 
   async list(
     typeName: string,
-    query: { status?: DocumentStatus; q?: string; page: number; pageSize: number },
+    query: {
+      status?: DocumentStatus | 'live'
+      q?: string
+      ref?: string
+      page: number
+      pageSize: number
+    },
     actor: AuthUser,
-  ): Promise<{ items: DocumentSummary[]; total: number }> {
+  ): Promise<{
+    items: DocumentSummary[]
+    total: number
+    counts: Record<DocumentStatus | 'live', number>
+  }> {
     const type = this.registry.get(typeName)
     this.assert(actor, type, 'read')
 
     const qb = this.documents.createQueryBuilder('d').where('d.type = :type', { type: type.type })
+    if (query.status === 'live') qb.andWhere('d.published IS NOT NULL AND d.scheduled_at IS NULL')
     if (query.status === 'draft') qb.andWhere('d.published IS NULL AND d.scheduled_at IS NULL')
     if (query.status === 'published') {
       qb.andWhere(
@@ -167,6 +178,14 @@ export class DocumentsService {
     if (query.status === 'scheduled') qb.andWhere('d.scheduled_at IS NOT NULL')
     // The documents are small and few: a text match over the JSON is fast enough and finds any field.
     if (query.q) qb.andWhere('d.draft::text ILIKE :q', { q: `%${query.q}%` })
+    if (query.ref) {
+      const [field, id] = query.ref.split(':') as [string, string]
+      // Only the type's own reference fields: their names are checked identifiers.
+      if (!(type.references ?? []).some((reference) => reference.field === field)) {
+        throw new BadRequestException({ code: 'bad_filter', message: 'Неизвестный фильтр' })
+      }
+      qb.andWhere(`d.draft -> 'shared' ->> '${field}' = :refId`, { refId: id })
+    }
 
     if (type.adminOrder) this.applyOrder(qb, type, 'draft')
     const [rows, total] = await qb
@@ -175,7 +194,32 @@ export class DocumentsService {
       .take(query.pageSize)
       .getManyAndCount()
     const names = await this.userNames(rows.map((row) => row.updatedBy))
-    return { items: rows.map((row) => this.summary(type, row, names)), total }
+    return {
+      items: rows.map((row) => this.summary(type, row, names)),
+      total,
+      counts: await this.counts(type.type),
+    }
+  }
+
+  /** How many documents of the type are in each state, for the list's tabs. */
+  private async counts(type: string): Promise<Record<DocumentStatus | 'live', number>> {
+    const [row] = await this.documents.query(
+      `SELECT
+         count(*) FILTER (WHERE published IS NULL AND scheduled_at IS NULL) AS draft,
+         count(*) FILTER (WHERE published IS NOT NULL AND draft_hash = published_hash AND scheduled_at IS NULL) AS published,
+         count(*) FILTER (WHERE published IS NOT NULL AND draft_hash <> published_hash AND scheduled_at IS NULL) AS changed,
+         count(*) FILTER (WHERE scheduled_at IS NOT NULL) AS scheduled,
+         count(*) FILTER (WHERE published IS NOT NULL AND scheduled_at IS NULL) AS live
+       FROM documents WHERE type = $1 AND deleted_at IS NULL`,
+      [type],
+    )
+    return {
+      draft: Number(row?.draft ?? 0),
+      published: Number(row?.published ?? 0),
+      changed: Number(row?.changed ?? 0),
+      scheduled: Number(row?.scheduled ?? 0),
+      live: Number(row?.live ?? 0),
+    }
   }
 
   async get(id: string, actor: AuthUser): Promise<DocumentView> {
@@ -306,6 +350,51 @@ export class DocumentsService {
     await this.record('documents.publish', type, doc, actor, req)
     this.refreshSite(type, doc, previousSlug)
     return this.view(type, doc)
+  }
+
+  /**
+   * Switches one of the type's `flags` in the working copy and, when the document is on the
+   * site, in the live copy too: pinning a post doesn't leave "unpublished changes" behind, nor
+   * publish anyone's half-done edits.
+   */
+  async setFlag(
+    id: string,
+    field: string,
+    value: boolean,
+    actor: AuthUser,
+    req?: Request,
+  ): Promise<DocumentView> {
+    const result = await this.dataSource.transaction(async (manager) => {
+      const doc = await this.lock(manager, id)
+      const type = this.registry.get(doc.type)
+      if (!type.flags?.includes(field)) {
+        throw new BadRequestException({ code: 'bad_flag', message: 'Это поле так не меняется' })
+      }
+      this.assert(actor, type, 'write')
+      if (doc.published) this.assert(actor, type, 'publish')
+      if ((doc.draft.shared[field] === true) === value) return { doc, type, changed: false }
+
+      const inSync = doc.published !== null && doc.draftHash === doc.publishedHash
+      doc.draft = { ...doc.draft, shared: { ...doc.draft.shared, [field]: value } }
+      doc.draftHash = hashData(doc.draft)
+      if (doc.published) {
+        doc.published = { ...doc.published, shared: { ...doc.published.shared, [field]: value } }
+        doc.publishedHash = inSync ? doc.draftHash : hashData(doc.published)
+      }
+      doc.revision += 1
+      doc.updatedBy = actor.id
+      await manager.save(doc)
+      await this.addVersion(manager, doc.id, 'saved', doc.draft, doc.draftHash, actor.id)
+      return { doc, type, changed: true }
+    })
+
+    if (result.changed) {
+      await this.record('documents.save', result.type, result.doc, actor, req, {
+        summary: `${result.type.label}: ${result.type.title(result.doc.draft)} — ${field}: ${value ? 'да' : 'нет'}`,
+      })
+      if (result.doc.published) this.refreshSite(result.type, result.doc, null)
+    }
+    return this.view(result.type, result.doc)
   }
 
   /** Takes it off the site. The working copy and the history stay. */
@@ -706,7 +795,11 @@ export class DocumentsService {
     const keep = only ? new Set([...(only.shared ?? []), ...(only.localized ?? [])]) : null
     const localized = rows.map((row) => {
       const data = (draft ? row.draft : row.published) as DocumentData
-      const { fields, translated } = localize(data, locale)
+      const localizedFields = localize(data, locale)
+      const translated = localizedFields.translated
+      const computed =
+        this.registry.find(row.type)?.computed?.(localizedFields.fields, data, locale) ?? {}
+      const fields = { ...localizedFields.fields, ...computed }
       if (!keep) return { row, fields, translated }
       const picked = Object.fromEntries(Object.entries(fields).filter(([key]) => keep.has(key)))
       return { row, fields: picked, translated }

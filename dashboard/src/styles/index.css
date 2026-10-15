@@ -5,69 +5,102 @@
    Class-based so the theme store can drive it from JS. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens. Everything below is referenced as `bg-background`,
-   `text-muted-foreground`, `rounded-lg`, etc. Primary is the Autodoc brand
-   green from the public site (#2f8a3d; #57b13c in dark mode). */
+/* Design tokens (the "News Admin" design from Claude Design): warm grey page, white cards,
+   ink text, blue accent, a dark sidebar in both themes. Everything below is referenced as
+   `bg-background`, `text-muted-foreground`, `bg-sidebar`, `rounded-lg`, etc. */
 @theme {
-  --color-background: oklch(1 0 0);
-  --color-foreground: oklch(0.22 0.02 130);
+  --font-sans: "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.22 0.02 130);
+  --color-background: #f6f6f4;
+  --color-foreground: #17171a;
 
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.22 0.02 130);
+  --color-card: #ffffff;
+  --color-card-foreground: #17171a;
 
-  --color-primary: oklch(0.56 0.13 146);
-  --color-primary-foreground: oklch(0.99 0 0);
+  --color-popover: #ffffff;
+  --color-popover-foreground: #17171a;
 
-  --color-secondary: oklch(0.967 0.003 130);
-  --color-secondary-foreground: oklch(0.22 0.02 130);
+  --color-primary: #2449d8;
+  --color-primary-foreground: #ffffff;
 
-  --color-muted: oklch(0.967 0.003 130);
-  --color-muted-foreground: oklch(0.52 0.01 130);
+  --color-secondary: #efeeea;
+  --color-secondary-foreground: #17171a;
 
-  --color-accent: oklch(0.955 0.02 146);
-  --color-accent-foreground: oklch(0.3 0.06 146);
+  /* Segmented controls and quiet fills. */
+  --color-muted: #edece8;
+  --color-muted-foreground: #6b6b70;
 
-  --color-destructive: oklch(0.58 0.22 27);
-  --color-destructive-foreground: oklch(0.99 0 0);
+  /* Hover on rows and ghost buttons. */
+  --color-accent: #efeeea;
+  --color-accent-foreground: #17171a;
 
-  --color-border: oklch(0.92 0.005 130);
-  --color-input: oklch(0.92 0.005 130);
-  --color-ring: oklch(0.56 0.13 146);
+  --color-destructive: #b3261e;
+  --color-destructive-foreground: #ffffff;
 
-  --radius: 0.625rem;
+  --color-border: #e6e5e1;
+  --color-input: #e6e5e1;
+  --color-ring: #2449d8;
+
+  /* Status pills. */
+  --color-success: #1f7a45;
+  --color-success-soft: #e7f4ec;
+  --color-info: #2449d8;
+  --color-info-soft: #e8edfc;
+  --color-danger-soft: #fbeaea;
+  --color-neutral-soft: #eeedea;
+  --color-neutral: #55555a;
+
+  /* The sidebar is dark in both themes. */
+  --color-sidebar: #17171a;
+  --color-sidebar-foreground: #e9e8e4;
+  --color-sidebar-muted: #8e8d89;
+  --color-sidebar-label: #77766f;
+  --color-sidebar-active: #2a2a2e;
+  --color-sidebar-border: #2a2a2e;
+
+  --radius: 0.5rem;
 }
 
 .dark {
-  --color-background: oklch(0.18 0.01 130);
-  --color-foreground: oklch(0.97 0.005 130);
+  --color-background: #111113;
+  --color-foreground: #e9e8e4;
 
-  --color-card: oklch(0.22 0.01 130);
-  --color-card-foreground: oklch(0.97 0.005 130);
+  --color-card: #1b1b1e;
+  --color-card-foreground: #e9e8e4;
 
-  --color-popover: oklch(0.22 0.01 130);
-  --color-popover-foreground: oklch(0.97 0.005 130);
+  --color-popover: #1b1b1e;
+  --color-popover-foreground: #e9e8e4;
 
-  --color-primary: oklch(0.69 0.16 138);
-  --color-primary-foreground: oklch(0.18 0.02 140);
+  --color-primary: #5b7cf0;
+  --color-primary-foreground: #ffffff;
 
-  --color-secondary: oklch(0.27 0.01 130);
-  --color-secondary-foreground: oklch(0.97 0.005 130);
+  --color-secondary: #26262a;
+  --color-secondary-foreground: #e9e8e4;
 
-  --color-muted: oklch(0.27 0.01 130);
-  --color-muted-foreground: oklch(0.72 0.01 130);
+  --color-muted: #232327;
+  --color-muted-foreground: #9a9994;
 
-  --color-accent: oklch(0.3 0.04 146);
-  --color-accent-foreground: oklch(0.95 0.03 146);
+  --color-accent: #26262a;
+  --color-accent-foreground: #e9e8e4;
 
-  --color-destructive: oklch(0.65 0.2 27);
-  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-destructive: #ef6b62;
+  --color-destructive-foreground: #ffffff;
 
-  --color-border: oklch(0.32 0.01 130);
-  --color-input: oklch(0.32 0.01 130);
-  --color-ring: oklch(0.69 0.16 138);
+  --color-border: #2c2c30;
+  --color-input: #2c2c30;
+  --color-ring: #5b7cf0;
+
+  --color-success: #6fcf97;
+  --color-success-soft: #1d3326;
+  --color-info: #8fa6f5;
+  --color-info-soft: #1e2a4d;
+  --color-danger-soft: #3a1f1d;
+  --color-neutral-soft: #2a2a2e;
+  --color-neutral: #b4b3ae;
+
+  --color-sidebar: #0c0c0e;
+  --color-sidebar-active: #232327;
+  --color-sidebar-border: #232327;
 }
 
 @layer base {
@@ -78,7 +111,8 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Respect users who ask for less motion. */

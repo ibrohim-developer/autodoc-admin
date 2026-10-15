@@ -303,6 +303,17 @@ export class StatsService {
     }
   }
 
+  /** All views kept (13 months) of each of these documents, for the admin's lists. */
+  async viewsOf(ids: string[]): Promise<Record<string, number>> {
+    if (ids.length === 0) return {}
+    const rows: { content_id: string; views: string }[] = await this.dataSource.query(
+      `SELECT content_id, count(*) AS views FROM stats_views
+        WHERE content_id = ANY($1) GROUP BY content_id`,
+      [ids],
+    )
+    return Object.fromEntries(rows.map((row) => [row.content_id, Number(row.views)]))
+  }
+
   /** "Новости": views and reading time per post. */
   async content(period: Period) {
     const rows: {

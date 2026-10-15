@@ -51,10 +51,24 @@ export type ContentTypeDef = {
   order?: OrderBy[]
   /** The admin list follows `order` too (directions, projects), instead of last-edited first. */
   adminOrder?: boolean
+  /**
+   * Fields the site gets that nobody types, made from the language's fields (after the Uzbek
+   * fallback): a news card's two lines come from the start of its text.
+   */
+  computed?(
+    fields: Record<string, unknown>,
+    data: DocumentData,
+    locale: Locale,
+  ): Record<string, unknown>
   /** Fields the site's lists get; its own page gets everything. Keeps lists of articles light. */
   summary?: { shared?: string[]; localized?: string[] }
   /** Fields pointing at other documents: checked on save, and those can't be deleted while used. */
   references?: Reference[]
+  /**
+   * Yes/no shared fields the list switches in one click (a post's "pinned"). The switch goes to
+   * the working copy and to what the site shows at once, so it leaves no unpublished changes.
+   */
+  flags?: string[]
   /** A shared field no two documents of the type may share (a redirect's source address). */
   unique?: { field: string; message: string }
 }

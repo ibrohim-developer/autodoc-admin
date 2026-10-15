@@ -135,6 +135,9 @@ importers:
 
   dashboard:
     dependencies:
+      '@fontsource-variable/onest':
+        specifier: 5.3.1
+        version: 5.3.1
       '@hookform/resolvers':
         specifier: 5.8.0
         version: 5.8.0(@standard-schema/spec@1.1.0)(ajv@8.20.0)(class-transformer@0.5.1)(class-validator@0.15.1)(react-hook-form@7.85.0(react@19.2.8))(zod@4.4.3)
@@ -491,6 +494,9 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fontsource-variable/onest@5.3.1':
+    resolution: {integrity: sha512-xaaw6G4HDB2/RczsWLD/2bnib4ykmQlTlBUN3GOEOiyErilZukQWVJG95h9zwAy0i8KY+QzDa+COPfqhI72Acw==}
 
   '@hookform/resolvers@5.8.0':
     resolution: {integrity: sha512-2m6GvRLmYYK1Fwt093lGMf7db9l/+8pNuAtwoNkpBntJT4xcA5lNthYGWKViOc3z2SuaPD0HjE81pyXmqc1JyA==}
@@ -4502,6 +4508,8 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
 
   '@floating-ui/utils@0.2.12': {}
+
+  '@fontsource-variable/onest@5.3.1': {}
 
   '@hookform/resolvers@5.8.0(@standard-schema/spec@1.1.0)(ajv@8.20.0)(class-transformer@0.5.1)(class-validator@0.15.1)(react-hook-form@7.85.0(react@19.2.8))(zod@4.4.3)':
     dependencies:

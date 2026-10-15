@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import { Type } from 'class-transformer'
 import {
+  IsBoolean,
   IsDate,
   IsIn,
   IsInt,
@@ -37,9 +38,15 @@ class ListQuery {
   @Matches(TYPE_PATTERN)
   type: string
 
+  /** `live`: on the site now, with or without unpublished changes. */
   @IsOptional()
-  @IsIn(['draft', 'published', 'changed', 'scheduled'])
-  status?: DocumentStatus
+  @IsIn(['draft', 'published', 'changed', 'scheduled', 'live'])
+  status?: DocumentStatus | 'live'
+
+  /** A reference field and the id it must point to: `categoryId:<uuid>`. */
+  @IsOptional()
+  @Matches(/^[a-zA-Z][a-zA-Z0-9_]{0,39}:[0-9a-f-]{36}$/)
+  ref?: string
 
   @IsOptional()
   @IsString()
@@ -82,6 +89,11 @@ class RevisionDto {
   @IsInt()
   @Min(1)
   revision?: number
+}
+
+class FlagDto {
+  @IsBoolean()
+  value: boolean
 }
 
 class RequiredRevisionDto {
@@ -165,6 +177,18 @@ export class DocumentsController {
     @Req() req: AppRequest,
   ) {
     return this.documents.publish(id, dto, actor, req)
+  }
+
+  /** A one-click switch from the list (`flags` of the type), on the live copy too. */
+  @Put(':id/flags/:field')
+  setFlag(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('field') field: string,
+    @Body() dto: FlagDto,
+    @CurrentUser() actor: AuthUser,
+    @Req() req: AppRequest,
+  ) {
+    return this.documents.setFlag(id, field, dto.value, actor, req)
   }
 
   @Post(':id/unpublish')

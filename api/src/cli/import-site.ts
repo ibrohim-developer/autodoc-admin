@@ -144,10 +144,16 @@ async function importPosts(app: INestApplicationContext, posts: ExportedPost[], 
             locale,
             {
               title: texts.title,
-              ...(texts.excerpt ? { excerpt: texts.excerpt } : {}),
               body: {
                 type: 'doc',
-                content: (texts.body ?? []).map((text) => paragraph(text, post.link)),
+                // The card's lines are now made from the text: a post that only had its two
+                // lines on the old site keeps them as its text.
+                content: (texts.body?.length
+                  ? texts.body
+                  : texts.excerpt
+                    ? [texts.excerpt]
+                    : []
+                ).map((text) => paragraph(text, post.link)),
               },
             },
           ],

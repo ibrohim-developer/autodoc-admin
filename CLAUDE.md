@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-Guidance for Claude Code in this repo. Human docs: [README.md](README.md). Dashboard
+Guidance for Claude Code in this repo. Human docs: [README.md](README.md). The client's spec:
+[docs/SPEC.md](docs/SPEC.md); what is planned and where the plan differs: [docs/ROADMAP.md](docs/ROADMAP.md). Dashboard
 conventions (feature segments, `request()` with Zod, `cn()`, TS 7 traps): [dashboard/CLAUDE.md](dashboard/CLAUDE.md).
 
 ## Commands

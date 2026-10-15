@@ -1,5 +1,7 @@
 import type { RichText } from '../content/rich-text.js'
 
+export { excerpt } from '../content/rich-text.js'
+
 /**
  * hh.uz vacancy descriptions are HTML (p, strong, em, ul/ol, br, sometimes h3). This turns
  * them into the editor's format, keeping paragraphs, headings, lists, bold and italic. Every
@@ -48,14 +50,6 @@ export function htmlToPlain(html: string): string {
   )
     .replace(/\s+/g, ' ')
     .trim()
-}
-
-/** At most `max` characters, cut at a word and marked with "…". */
-export function excerpt(text: string, max: number): string {
-  if (text.length <= max) return text
-  const cut = text.slice(0, max - 1)
-  const space = cut.lastIndexOf(' ')
-  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:–—-]+$/, '')}…`
 }
 
 const MAX_TEXT = 20_000

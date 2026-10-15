@@ -247,7 +247,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring',
+        'overflow-hidden rounded-lg border bg-card focus-within:ring-2 focus-within:ring-ring',
         invalid && 'border-destructive',
         className,
       )}

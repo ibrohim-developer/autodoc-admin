@@ -58,7 +58,7 @@ describe('news', () => {
   function post(title: string, shared: Record<string, unknown> = {}) {
     return {
       shared: { date: '2026-10-01', ...shared },
-      locales: { uz: { title, excerpt: `${title} haqida`, body: paragraph(`${title} matni`) } },
+      locales: { uz: { title, body: paragraph(`${title} matni`) } },
     }
   }
 
@@ -104,11 +104,14 @@ describe('news', () => {
     expect(Object.keys(item.data).sort()).toEqual(
       ['cover', 'date', 'excerpt', 'pinned', 'title'].sort(),
     )
+    // Nobody types the card's lines: they are the start of the text.
+    expect(item.data.excerpt).toBe('Muhim matni')
     expect(item.media[cover.mediaId]).toMatchObject({ width: 800, height: 600 })
 
     // The post's own page gets everything.
     const page = await siteApi('post/muhim?locale=ru').expect(200)
     expect(page.body.data.body).toEqual(paragraph('Muhim matni'))
+    expect(page.body.data.excerpt).toBe('Muhim matni')
   })
 
   it('checks the category and keeps a category in use out of the trash', async () => {
@@ -164,5 +167,158 @@ describe('news', () => {
       .send({ locale: 'ru' })
       .expect(200)
     expect(new URL(res.body.url).searchParams.get('path')).toBe('/ru/blog/korib-chiqish/')
+  })
+
+  it('keeps the article as blocks and gives the site each language block by block', async () => {
+    const cover = { mediaId: await photo() }
+    const shot = { mediaId: await photo() }
+    const created = await marketing
+      .post('/api/admin/content')
+      .send({
+        type: 'post',
+        data: {
+          shared: {
+            date: '2026-10-01',
+            cover,
+            blocks: [
+              { id: 'a1', type: 'text' },
+              { id: 'b2', type: 'image', image: shot },
+              { id: 'c3', type: 'gallery', items: [shot, cover] },
+              { id: 'd4', type: 'video', url: 'https://www.instagram.com/reel/abc123/' },
+              { id: 'e5', type: 'text' },
+            ],
+          },
+          locales: {
+            uz: {
+              title: 'Bloklar',
+              blocks: {
+                a1: { text: paragraph('Birinchi matn') },
+                b2: { caption: 'Rasm izohi' },
+                e5: { text: paragraph('Ikkinchi matn') },
+              },
+            },
+            // Only the first text is translated: the rest falls back to Uzbek, block by block.
+            ru: { blocks: { a1: { text: paragraph('Первый текст') } } },
+          },
+        },
+      })
+      .expect(201)
+    await marketing.post(`/api/admin/content/${created.body.id}/publish`).send({}).expect(200)
+
+    const ru = (await siteApi(`post/${created.body.slug}?locale=ru`).expect(200)).body
+    expect(ru.data.blocks).toEqual([
+      { type: 'text', id: 'a1', body: paragraph('Первый текст') },
+      { type: 'image', id: 'b2', image: shot, caption: 'Rasm izohi' },
+      { type: 'gallery', id: 'c3', items: [shot, cover] },
+      { type: 'video', id: 'd4', url: 'https://www.instagram.com/reel/abc123/' },
+      { type: 'text', id: 'e5', body: paragraph('Ikkinchi matn') },
+    ])
+    expect(ru.data.excerpt).toBe('Первый текст Ikkinchi matn')
+    expect(ru.media[shot.mediaId]).toBeTruthy()
+    // The old single-text fields, for a site that doesn't render blocks yet.
+    expect(ru.data.videoUrl).toBe('https://www.instagram.com/reel/abc123/')
+    expect(ru.data.gallery).toEqual([shot, cover])
+    expect(ru.data.body.content).toHaveLength(3)
+
+    // A post with nothing to read can't go live; a broken block is refused on save.
+    const empty = await marketing
+      .post('/api/admin/content')
+      .send({
+        type: 'post',
+        data: {
+          shared: { date: '2026-10-01', cover, blocks: [{ id: 'x', type: 'text' }] },
+          locales: { uz: { title: 'Bo‘sh' } },
+        },
+      })
+      .expect(201)
+    const refused = await marketing
+      .post(`/api/admin/content/${empty.body.id}/publish`)
+      .send({})
+      .expect(400)
+    expect(refused.body.issues).toEqual([
+      { path: 'shared.blocks', message: 'Добавьте текст материала' },
+    ])
+    await marketing
+      .post('/api/admin/content')
+      .send({
+        type: 'post',
+        data: {
+          shared: {
+            date: '2026-10-01',
+            blocks: [{ id: 'v', type: 'video', url: 'https://vimeo.com/1' }],
+          },
+          locales: { uz: { title: 'Video' } },
+        },
+      })
+      .expect(400)
+  })
+
+  it('counts posts per state and filters the list by state and category', async () => {
+    const cover = { mediaId: await photo() }
+    const events = await category('Tadbirlar')
+    const live = await createPost('Jonli', { cover, categoryId: events })
+    await marketing.post(`/api/admin/content/${live.id}/publish`).send({}).expect(200)
+    await createPost('Qoralama', { categoryId: events })
+    await createPost('Boshqa')
+
+    const all = await marketing.get('/api/admin/content?type=post').expect(200)
+    expect(all.body.counts).toEqual({ draft: 2, published: 1, changed: 0, scheduled: 0, live: 1 })
+    const onSite = await marketing.get('/api/admin/content?type=post&status=live').expect(200)
+    expect(onSite.body.items.map((i: { title: string }) => i.title)).toEqual(['Jonli'])
+    const inCategory = await marketing
+      .get(`/api/admin/content?type=post&ref=categoryId:${events}`)
+      .expect(200)
+    expect(inCategory.body.items.map((i: { title: string }) => i.title).sort()).toEqual([
+      'Jonli',
+      'Qoralama',
+    ])
+    await marketing.get(`/api/admin/content?type=post&ref=date:${events}`).expect(400)
+
+    const views = await marketing.get(`/api/admin/stats/views?ids=${live.id}`).expect(200)
+    expect(views.body).toEqual({ views: {} })
+  })
+
+  it('pins a post from the list on the site too, without publishing pending edits', async () => {
+    const cover = { mediaId: await photo() }
+    const created = await createPost('Yangilik', { cover })
+    const live = await marketing
+      .post(`/api/admin/content/${created.id}/publish`)
+      .send({})
+      .expect(200)
+
+    const pinned = await marketing
+      .put(`/api/admin/content/${created.id}/flags/pinned`)
+      .send({ value: true })
+      .expect(200)
+    expect(pinned.body.status).toBe('published')
+    expect(pinned.body.revision).toBe(live.body.revision + 1)
+    const onSite = await siteApi('post').expect(200)
+    expect(onSite.body.items[0].data.pinned).toBe(true)
+
+    // An edit in progress stays in the draft: only the flag reaches the site.
+    const draft = await marketing.get(`/api/admin/content/${created.id}`).expect(200)
+    await marketing
+      .put(`/api/admin/content/${created.id}`)
+      .send({
+        revision: draft.body.revision,
+        data: {
+          ...draft.body.data,
+          locales: { uz: { ...draft.body.data.locales.uz, title: 'Yangi sarlavha' } },
+        },
+      })
+      .expect(200)
+    const unpinned = await marketing
+      .put(`/api/admin/content/${created.id}/flags/pinned`)
+      .send({ value: false })
+      .expect(200)
+    expect(unpinned.body.status).toBe('changed')
+    const after = await siteApi('post').expect(200)
+    expect(after.body.items[0].data.pinned).toBe(false)
+    expect(after.body.items[0].data.title).toBe('Yangilik')
+
+    await marketing
+      .put(`/api/admin/content/${created.id}/flags/date`)
+      .send({ value: true })
+      .expect(400)
   })
 })

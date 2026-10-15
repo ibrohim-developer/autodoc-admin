@@ -111,6 +111,14 @@ export function richTextToPlain(doc: RichText): string {
   return parts.join('').replace(/\s+/g, ' ').trim()
 }
 
+/** At most `max` characters, cut at a word and marked with "…". */
+export function excerpt(text: string, max: number): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max - 1)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:–—-]+$/, '')}…`
+}
+
 export function isRichText(value: unknown): value is RichText {
   return (
     typeof value === 'object' &&

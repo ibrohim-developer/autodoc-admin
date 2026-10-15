@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
-import { IsOptional, Matches } from 'class-validator'
+import { Transform } from 'class-transformer'
+import { ArrayMaxSize, IsArray, IsOptional, IsUUID, Matches } from 'class-validator'
 import type { Request } from 'express'
 import { z } from 'zod'
 import { Public, RequirePermission } from '../common/decorators.js'
@@ -9,6 +10,15 @@ import { SiteOriginGuard } from '../common/site-origin.guard.js'
 import { StatsService } from './stats.service.js'
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
+
+class IdsDto {
+  /** Comma-separated document ids. */
+  @Transform(({ value }) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value))
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  ids: string[]
+}
 
 class PeriodDto {
   @IsOptional()
@@ -62,6 +72,13 @@ export class StatsController {
   @RequirePermission('stats.general')
   overview(@Query() query: PeriodDto) {
     return this.stats.overview(this.stats.period(query.from, query.to))
+  }
+
+  /** Views per document over everything kept: the "Просмотры" column of the news list. */
+  @Get('views')
+  @RequirePermission('stats.content')
+  async views(@Query() query: IdsDto) {
+    return { views: await this.stats.viewsOf(query.ids) }
   }
 
   @Get('content')

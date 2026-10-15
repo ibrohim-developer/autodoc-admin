@@ -1,4 +1,5 @@
 import { Monitor, Moon, Sun } from 'lucide-react'
+import { cn } from '@/lib/cn'
 import { type Theme, useThemeStore } from '@/stores/theme-store'
 import { Button } from './ui/button'
 
@@ -8,12 +9,18 @@ const OPTIONS: ReadonlyArray<{ value: Theme; label: string; Icon: typeof Sun }> 
   { value: 'system', label: 'Как в системе', Icon: Monitor },
 ]
 
-export function ThemeToggle() {
+/** `onDark`: sits on the dark sidebar, so its colours don't follow the page theme. */
+export function ThemeToggle({ onDark = false }: { onDark?: boolean }) {
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
 
   return (
-    <fieldset className="inline-flex items-center gap-1 rounded-lg border border-border p-1">
+    <fieldset
+      className={cn(
+        'inline-flex items-center gap-1 rounded-lg border p-1',
+        onDark ? 'border-sidebar-border' : 'border-border',
+      )}
+    >
       <legend className="sr-only">Тема оформления</legend>
       {OPTIONS.map(({ value, label, Icon }) => (
         <Button
@@ -24,7 +31,13 @@ export function ThemeToggle() {
           aria-label={label}
           aria-pressed={theme === value}
           onClick={() => setTheme(value)}
-          className="size-7"
+          className={cn(
+            'size-7',
+            onDark &&
+              (theme === value
+                ? 'bg-sidebar-active text-white hover:bg-sidebar-active'
+                : 'text-sidebar-muted hover:bg-sidebar-active hover:text-white'),
+          )}
         >
           <Icon aria-hidden="true" />
         </Button>

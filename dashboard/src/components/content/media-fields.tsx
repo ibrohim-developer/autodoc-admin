@@ -3,6 +3,7 @@ import { type KeyboardEvent, type MouseEvent, type ReactNode, useState } from 'r
 import { useController } from 'react-hook-form'
 import { MediaPicker } from '@/components/media-picker'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/cn'
 import { type Media, useMediaByIds } from '@/lib/media'
 import { Field } from './fields'
 
@@ -89,6 +90,7 @@ export function MediaField({
   required,
   focalName,
   previewAspect,
+  empty,
 }: {
   name: string
   label: string
@@ -98,6 +100,8 @@ export function MediaField({
   focalName?: string
   /** The crop the site uses, e.g. "330 / 185" for news cards. */
   previewAspect?: string
+  /** The empty box: its height and what it says (a cover is big, a social image small). */
+  empty?: { className: string; title?: string; note?: string }
 }) {
   const [open, setOpen] = useState(false)
   const { field, fieldState } = useController({ name })
@@ -138,10 +142,20 @@ export function MediaField({
           type="button"
           onClick={() => setOpen(true)}
           aria-invalid={fieldState.error ? true : undefined}
-          className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed text-muted-foreground text-sm transition-colors hover:border-primary hover:text-foreground aria-invalid:border-destructive"
+          className={cn(
+            'flex w-full flex-col items-center justify-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed bg-muted/30 px-4 text-center text-muted-foreground text-sm transition-colors hover:border-primary hover:text-foreground aria-invalid:border-destructive',
+            empty?.className ?? 'aspect-video',
+          )}
         >
-          <ImagePlus className="size-5" aria-hidden="true" />
-          Выбрать фото
+          {empty?.title ? (
+            <span className="font-medium text-foreground">{empty.title}</span>
+          ) : (
+            <>
+              <ImagePlus className="size-5" aria-hidden="true" />
+              Выбрать фото
+            </>
+          )}
+          {empty?.note ? <span className="text-muted-foreground text-xs">{empty.note}</span> : null}
         </button>
       )}
       <MediaPicker

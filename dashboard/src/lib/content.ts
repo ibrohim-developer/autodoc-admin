@@ -55,7 +55,20 @@ export const documentViewSchema = documentSummarySchema.extend({
 })
 export type DocumentView = z.infer<typeof documentViewSchema>
 
-const documentListSchema = z.object({ items: z.array(documentSummarySchema), total: z.number() })
+const documentListSchema = z.object({
+  items: z.array(documentSummarySchema),
+  total: z.number(),
+  /** How many documents of the type are in each state, whatever the filter. */
+  counts: z
+    .object({
+      draft: z.number(),
+      published: z.number(),
+      changed: z.number(),
+      scheduled: z.number(),
+      live: z.number(),
+    })
+    .optional(),
+})
 export type DocumentList = z.infer<typeof documentListSchema>
 
 export const VERSION_KIND_LABELS = {
@@ -78,7 +91,15 @@ export const versionSchema = z.object({
 })
 export type Version = z.infer<typeof versionSchema>
 
-export type ListParams = { status?: DocumentStatus; q?: string; page?: number; pageSize?: number }
+export type ListParams = {
+  /** `live`: on the site, with or without unpublished changes. */
+  status?: DocumentStatus | 'live'
+  q?: string
+  /** A reference field and the document it points at: `categoryId:<uuid>`. */
+  ref?: string
+  page?: number
+  pageSize?: number
+}
 
 export const contentKeys = {
   all: ['content'] as const,
@@ -211,6 +232,18 @@ export function useScheduleDocument() {
           schema: documentViewSchema,
         })
       : request(`admin/content/${id}/schedule`, { method: 'DELETE', schema: documentViewSchema }),
+  )
+}
+
+/** A one-click yes/no from the list (a post's "pinned"); the live copy changes too. */
+export function useSetFlag() {
+  return useDocumentMutation(
+    ({ id, field, value }: { id: string; field: string; value: boolean }) =>
+      request(`admin/content/${id}/flags/${field}`, {
+        method: 'PUT',
+        body: { value },
+        schema: documentViewSchema,
+      }),
   )
 }
 
