@@ -54,8 +54,6 @@ export const postType: ContentTypeDef = {
     categoryId: z.uuid().nullable().optional(),
     gallery: z.array(mediaRef).max(40, 'Не больше 40 фото').optional(),
     videoUrl: videoUrl.nullable().optional(),
-    /** For link previews in messengers and social networks; the cover when empty. */
-    ogImage: mediaRef.nullable().optional(),
   }),
   localized: z.object({
     title: requiredText(200, 'Укажите заголовок'),

@@ -110,7 +110,8 @@ export function PostSidebar({ doc }: EditorContext) {
         <CardHeader>
           <CardTitle>Обложка</CardTitle>
           <CardDescription>
-            Нужна для публикации. Нажмите на главное в кадре — так обрежется карточка.
+            Нужна для публикации. Нажмите на главное в кадре — так обрежется карточка. Она же —
+            картинка превью, когда ссылкой делятся в Telegram и соцсетях.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -126,17 +127,6 @@ export function PostSidebar({ doc }: EditorContext) {
             label="Фото целиком в новости"
             hint="Без обрезки по рамке баннера."
           />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Для соцсетей</CardTitle>
-          <CardDescription>
-            Превью ссылки в Telegram и Facebook. Если пусто — обложка.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MediaField name="shared.ogImage" label="Картинка" />
         </CardContent>
       </Card>
     </>
