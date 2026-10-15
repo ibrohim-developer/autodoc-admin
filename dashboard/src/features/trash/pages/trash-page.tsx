@@ -14,8 +14,7 @@ import {
 } from '@/components/ui/table'
 import { errorMessage } from '@/lib/api-client'
 import { formatDateTime } from '@/lib/format'
-import type { TrashItem } from '../api/trash-api'
-import { usePurgeItem, useRestoreItem, useTrash } from '../hooks/use-trash'
+import { type TrashItem, usePurgeItem, useRestoreItem, useTrash } from '@/lib/trash'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 

@@ -218,6 +218,7 @@ export const postType: ContentTypeDef = {
   },
   order: [{ field: 'pinned', direction: 'desc', cast: 'boolean' }],
   adminOrder: true,
+  flags: ['pinned'],
   summary: {
     shared: ['date', 'cover', 'coverPosition', 'pinned', 'categoryId'],
     localized: ['title', 'excerpt'],

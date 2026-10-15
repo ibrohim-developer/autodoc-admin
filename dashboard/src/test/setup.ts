@@ -56,3 +56,8 @@ beforeEach(() => {
     })),
   )
 })
+
+// Radix selects capture the pointer and scroll the chosen option into view on open.
+Element.prototype.hasPointerCapture ??= () => false
+Element.prototype.releasePointerCapture ??= () => {}
+Element.prototype.scrollIntoView ??= () => {}

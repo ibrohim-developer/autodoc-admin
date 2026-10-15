@@ -277,4 +277,48 @@ describe('news', () => {
     const views = await marketing.get(`/api/admin/stats/views?ids=${live.id}`).expect(200)
     expect(views.body).toEqual({ views: {} })
   })
+
+  it('pins a post from the list on the site too, without publishing pending edits', async () => {
+    const cover = { mediaId: await photo() }
+    const created = await createPost('Yangilik', { cover })
+    const live = await marketing
+      .post(`/api/admin/content/${created.id}/publish`)
+      .send({})
+      .expect(200)
+
+    const pinned = await marketing
+      .put(`/api/admin/content/${created.id}/flags/pinned`)
+      .send({ value: true })
+      .expect(200)
+    expect(pinned.body.status).toBe('published')
+    expect(pinned.body.revision).toBe(live.body.revision + 1)
+    const onSite = await siteApi('post').expect(200)
+    expect(onSite.body.items[0].data.pinned).toBe(true)
+
+    // An edit in progress stays in the draft: only the flag reaches the site.
+    const draft = await marketing.get(`/api/admin/content/${created.id}`).expect(200)
+    await marketing
+      .put(`/api/admin/content/${created.id}`)
+      .send({
+        revision: draft.body.revision,
+        data: {
+          ...draft.body.data,
+          locales: { uz: { ...draft.body.data.locales.uz, title: 'Yangi sarlavha' } },
+        },
+      })
+      .expect(200)
+    const unpinned = await marketing
+      .put(`/api/admin/content/${created.id}/flags/pinned`)
+      .send({ value: false })
+      .expect(200)
+    expect(unpinned.body.status).toBe('changed')
+    const after = await siteApi('post').expect(200)
+    expect(after.body.items[0].data.pinned).toBe(false)
+    expect(after.body.items[0].data.title).toBe('Yangilik')
+
+    await marketing
+      .put(`/api/admin/content/${created.id}/flags/date`)
+      .send({ value: true })
+      .expect(400)
+  })
 })

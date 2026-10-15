@@ -141,9 +141,15 @@ and settings in Stage 3.
 Every section uses one editor: language tabs, Сохранить / Опубликовать, preview on the real site,
 history, scheduling, unsaved-changes warning, Ctrl+S.
 
-- **Новости:** cover with a focus point for the card crop, date, category, pin, tags, video
-  link (YouTube / Instagram, the player loads only on click), gallery, SEO, social image.
-  Categories filter the news list on the site. Imported posts keep their addresses (/blog/14/).
+- **Новости и блог:** the article is a list of blocks (text, photo with caption, gallery, video
+  link — YouTube / Instagram Reels, the player loads only on click) in any order; cover with a
+  focus point for the card crop, date, category, pin, tags, SEO with length counters and a search
+  snippet, social image. The list has tabs by state with counts, a category filter, views per
+  post, and pins or trashes a post in one click (pinning a live post changes the site at once
+  and leaves other edits unpublished). Categories filter the news list on the site. Imported
+  posts keep their addresses (/blog/14/). One section, as before: no separate «Новость» / «Блог»
+  type. Video only by link, not as a file. The admin's look follows the Claude Design handoff
+  «News Admin» (dark sidebar, Onest).
 - **Вакансии:** direction, employment (full-time, part-time, remote, internship), city, short
   description, up to 4 requirements, full description. **New:** each vacancy has its own page
   (/vacancies/<address>/) with the apply button; a closed vacancy leaves the list and its page

@@ -352,6 +352,51 @@ export class DocumentsService {
     return this.view(type, doc)
   }
 
+  /**
+   * Switches one of the type's `flags` in the working copy and, when the document is on the
+   * site, in the live copy too: pinning a post doesn't leave "unpublished changes" behind, nor
+   * publish anyone's half-done edits.
+   */
+  async setFlag(
+    id: string,
+    field: string,
+    value: boolean,
+    actor: AuthUser,
+    req?: Request,
+  ): Promise<DocumentView> {
+    const result = await this.dataSource.transaction(async (manager) => {
+      const doc = await this.lock(manager, id)
+      const type = this.registry.get(doc.type)
+      if (!type.flags?.includes(field)) {
+        throw new BadRequestException({ code: 'bad_flag', message: 'Это поле так не меняется' })
+      }
+      this.assert(actor, type, 'write')
+      if (doc.published) this.assert(actor, type, 'publish')
+      if ((doc.draft.shared[field] === true) === value) return { doc, type, changed: false }
+
+      const inSync = doc.published !== null && doc.draftHash === doc.publishedHash
+      doc.draft = { ...doc.draft, shared: { ...doc.draft.shared, [field]: value } }
+      doc.draftHash = hashData(doc.draft)
+      if (doc.published) {
+        doc.published = { ...doc.published, shared: { ...doc.published.shared, [field]: value } }
+        doc.publishedHash = inSync ? doc.draftHash : hashData(doc.published)
+      }
+      doc.revision += 1
+      doc.updatedBy = actor.id
+      await manager.save(doc)
+      await this.addVersion(manager, doc.id, 'saved', doc.draft, doc.draftHash, actor.id)
+      return { doc, type, changed: true }
+    })
+
+    if (result.changed) {
+      await this.record('documents.save', result.type, result.doc, actor, req, {
+        summary: `${result.type.label}: ${result.type.title(result.doc.draft)} — ${field}: ${value ? 'да' : 'нет'}`,
+      })
+      if (result.doc.published) this.refreshSite(result.type, result.doc, null)
+    }
+    return this.view(result.type, result.doc)
+  }
+
   /** Takes it off the site. The working copy and the history stay. */
   async unpublish(id: string, actor: AuthUser, req: Request): Promise<DocumentView> {
     const { doc, type, wasLive, previousSlug } = await this.dataSource.transaction(

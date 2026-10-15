@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import { Type } from 'class-transformer'
 import {
+  IsBoolean,
   IsDate,
   IsIn,
   IsInt,
@@ -88,6 +89,11 @@ class RevisionDto {
   @IsInt()
   @Min(1)
   revision?: number
+}
+
+class FlagDto {
+  @IsBoolean()
+  value: boolean
 }
 
 class RequiredRevisionDto {
@@ -171,6 +177,18 @@ export class DocumentsController {
     @Req() req: AppRequest,
   ) {
     return this.documents.publish(id, dto, actor, req)
+  }
+
+  /** A one-click switch from the list (`flags` of the type), on the live copy too. */
+  @Put(':id/flags/:field')
+  setFlag(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('field') field: string,
+    @Body() dto: FlagDto,
+    @CurrentUser() actor: AuthUser,
+    @Req() req: AppRequest,
+  ) {
+    return this.documents.setFlag(id, field, dto.value, actor, req)
   }
 
   @Post(':id/unpublish')

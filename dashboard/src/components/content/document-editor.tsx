@@ -472,7 +472,7 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
         noValidate
       >
         {/* The action bar stays on top while the form scrolls, across the content area. */}
-        <header className="sticky top-0 z-10 -mx-4 -mt-8 mb-6 border-b bg-background/92 backdrop-blur-md sm:-mx-8 max-md:top-14">
+        <header className="sticky top-0 z-10 -mx-4 -mt-8 mb-6 border-b bg-background/92 backdrop-blur-md max-md:top-14 sm:-mx-8">
           <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-8">
             {(props.showBack ?? !singleton) ? (
               <Button type="button" variant="outline" size="sm" asChild>
