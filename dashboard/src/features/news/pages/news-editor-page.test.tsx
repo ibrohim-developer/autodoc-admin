@@ -68,6 +68,7 @@ describe('NewsEditorPage', () => {
           categoryId: null,
           gallery: [],
           videoUrl: null,
+          ogImage: null,
         },
         // Russian and English were left empty: not sent, so the site shows Uzbek.
         locales: {

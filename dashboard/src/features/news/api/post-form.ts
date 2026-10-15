@@ -23,6 +23,7 @@ export type PostForm = {
     categoryId: string | null
     gallery: MediaRef[]
     videoUrl: string
+    ogImage: MediaRef | null
   }
   locales: Record<Locale, PostLocale>
 }
@@ -62,6 +63,7 @@ export function emptyPost(): PostForm {
       categoryId: null,
       gallery: [],
       videoUrl: '',
+      ogImage: null,
     },
     locales: { uz: emptyLocale(), ru: emptyLocale(), en: emptyLocale() },
   }
@@ -90,6 +92,7 @@ export function postFromData(data: DocumentData): PostForm {
       categoryId: typeof shared.categoryId === 'string' ? shared.categoryId : null,
       gallery: refs(shared.gallery),
       videoUrl: text(shared.videoUrl),
+      ogImage: ref(shared.ogImage),
     },
     locales: { uz: locale('uz'), ru: locale('ru'), en: locale('en') },
   }
@@ -108,6 +111,7 @@ export function postToData(values: PostForm): DocumentData {
       categoryId: shared.categoryId,
       gallery: shared.gallery,
       videoUrl: shared.videoUrl.trim() || null,
+      ogImage: shared.ogImage,
     },
     locales: toLocales(values.locales),
   }
