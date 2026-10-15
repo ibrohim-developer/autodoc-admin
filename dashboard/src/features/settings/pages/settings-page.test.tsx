@@ -19,7 +19,7 @@ describe('SettingsPage', () => {
     expect(await screen.findByRole('textbox', { name: /Телефон/ })).toHaveValue('+998 55 505 75 75')
     await user.click(screen.getByRole('button', { name: '«Контакты» выше' }))
     await user.click(screen.getByRole('switch', { name: 'Показывать «Руководство»' }))
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() => {
       const body = sentBody(fetchMock, 'POST admin/content') as {

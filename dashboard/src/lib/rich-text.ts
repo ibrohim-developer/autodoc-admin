@@ -28,3 +28,25 @@ export function normalizeHref(input: string): string {
   if (/^(https?:|mailto:|tel:|\/|#)/i.test(value)) return value
   return `https://${value}`
 }
+
+/** The words of a document, for counters and previews (same idea as the API's excerpt). */
+export function richTextToPlain(doc: JSONContent | undefined): string {
+  const parts: string[] = []
+  const walk = (node: JSONContent | undefined) => {
+    if (!node) return
+    if (node.type === 'text' && node.text) parts.push(node.text)
+    if (node.type === 'hardBreak') parts.push(' ')
+    for (const child of node.content ?? []) walk(child)
+    if (node.type && node.type !== 'text' && node.type !== 'doc') parts.push(' ')
+  }
+  walk(doc)
+  return parts.join('').replace(/\s+/g, ' ').trim()
+}
+
+/** At most `max` characters, cut at a word: what the site's card shows. */
+export function excerpt(text: string, max: number): string {
+  if (text.length <= max) return text
+  const cut = text.slice(0, max - 1)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:–—-]+$/, '')}…`
+}

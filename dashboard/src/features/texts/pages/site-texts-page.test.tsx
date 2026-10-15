@@ -63,7 +63,7 @@ describe('SiteTextsPage', () => {
     expect(screen.queryByText('Metadata.title')).not.toBeInTheDocument()
 
     await user.type(screen.getByRole('textbox', { name: 'Hero.title' }), 'Yangi')
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() =>
       expect(sentBody(fetchMock, 'POST admin/content')).toEqual({
@@ -85,7 +85,7 @@ describe('SiteTextsPage', () => {
 
     await user.type(await screen.findByRole('textbox', { name: 'Blog.shareOn' }), 'Ulashish')
     expect(screen.getByText(/Оставьте \{network\}/)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Оставьте в тексте {network}')
     expect(

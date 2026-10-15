@@ -48,7 +48,7 @@ describe('IntegrationsPage', () => {
     await user.click(await screen.findByRole('switch', { name: 'Отправлять уведомления' }))
     await user.type(screen.getByLabelText('Токен бота'), '123456789:AAE-token')
     await user.type(screen.getByLabelText('Чат маркетинга (заявки)'), '-1001')
-    await user.click(screen.getAllByRole('button', { name: 'Сохранить' })[0] as HTMLElement)
+    await user.click(screen.getAllByRole('button', { name: /^Сохранить/ })[0] as HTMLElement)
 
     await vi.waitFor(() =>
       expect(sentBody(fetchMock, 'PUT admin/integrations/telegram')).toEqual({

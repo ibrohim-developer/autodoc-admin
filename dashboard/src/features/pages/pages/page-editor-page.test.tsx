@@ -18,7 +18,7 @@ describe('PageEditorPage', () => {
 
     await user.click(await screen.findByRole('switch', { name: 'Форма обратной связи' }))
     await user.type(screen.getByRole('textbox', { name: 'SEO-заголовок' }), 'Kontaktlar — Autodoc')
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() =>
       expect(sentBody(fetchMock, 'POST admin/content')).toEqual({

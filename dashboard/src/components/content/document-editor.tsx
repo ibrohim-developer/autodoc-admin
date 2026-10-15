@@ -65,12 +65,24 @@ export type EditorContext = {
   /** The document as last saved; null while it is new. */
   doc: DocumentView | null
   form: UseFormReturn<FieldValues>
+  /**
+   * Publishing at a set time, chosen in the form (the news sidebar's switch): while `at` is set,
+   * the main button schedules instead of publishing now.
+   */
+  schedule: { at: string | null; set: (at: string | null) => void; canPublish: boolean }
 }
 
 export type DocumentEditorProps<T extends FieldValues> = {
   type: string
   /** Heading of a document that doesn't exist yet: «Новая новость». */
   newTitle: string
+  /**
+   * A fixed heading in the top bar («Новый материал» / «Редактирование материала») when the
+   * title is big in the form itself; without it the bar shows the document's title.
+   */
+  heading?: { create: string; edit: string }
+  /** The language fields bring their own cards (news); otherwise they sit in one card. */
+  bareLocale?: boolean
   list: { path: string; label: string }
   /** Absent for a new document (or a singleton, found by its type). */
   id?: string
@@ -107,6 +119,23 @@ export type DocumentEditorProps<T extends FieldValues> = {
   validate?: (values: T) => Issue[]
 }
 
+const time = new Intl.DateTimeFormat('ru-RU', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Asia/Tashkent',
+})
+const day = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Asia/Tashkent',
+})
+
+/** "в 14:32" today, "14 окт." before. */
+function savedAt(iso: string): string {
+  const date = new Date(iso)
+  return day.format(date) === day.format(new Date()) ? `в ${time.format(date)}` : day.format(date)
+}
+
 /** "locales.uz.body.content.3…" → "locales.uz.body"; "shared.gallery.2.mediaId" → "shared.gallery". */
 function fieldOf(path: string): string {
   const parts = path.split('.')
@@ -123,31 +152,28 @@ function LocaleTabsList<T extends FieldValues>({
   // Only this small list re-renders on every keystroke.
   const values = useWatch() as T
   return (
-    <TabsList variant="line" className="h-auto w-full justify-start rounded-none border-b px-4">
+    <TabsList className="h-auto gap-1 rounded-[9px] bg-muted p-[3px]">
       {LOCALES.map((locale) => {
         const filled = hasLocale(values, locale)
         return (
-          <TabsTrigger key={locale} value={locale} className="flex-none gap-1.5 px-3 py-2.5">
-            {LOCALE_LABELS[locale]}
+          <TabsTrigger
+            key={locale}
+            value={locale}
+            className="h-[30px] flex-none gap-1.5 rounded-[7px] px-3.5 font-medium text-[13px] data-[state=active]:bg-card data-[state=active]:shadow-[0_1px_2px_rgba(0,0,0,.08)]"
+          >
+            {locale.toUpperCase()}
+            <span className="sr-only">{LOCALE_LABELS[locale]}</span>
             {locale === 'uz' && uzbekRequired ? (
-              <>
-                <span className="text-destructive" aria-hidden="true">
-                  *
-                </span>
-                <span className="sr-only">(обязательно)</span>
-              </>
-            ) : (
-              <>
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'size-1.5 rounded-full',
-                    filled ? 'bg-primary' : 'bg-muted-foreground/30',
-                  )}
-                />
-                <span className="sr-only">{filled ? '(заполнено)' : '(не заполнено)'}</span>
-              </>
-            )}
+              <span className="sr-only">(обязательно)</span>
+            ) : null}
+            <span
+              aria-hidden="true"
+              className={cn(
+                'size-1.5 rounded-full',
+                filled ? 'bg-success' : 'bg-muted-foreground/30',
+              )}
+            />
+            <span className="sr-only">{filled ? '(заполнено)' : '(не заполнено)'}</span>
           </TabsTrigger>
         )
       })}
@@ -177,6 +203,8 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
   const [loadedId, setLoadedId] = useState<string | null>(null)
   const [conflict, setConflict] = useState(false)
   const [dialog, setDialog] = useState<'history' | 'schedule' | 'unpublish' | 'delete' | null>(null)
+  /** A publication time picked in the form; null publishes now. */
+  const [scheduleAt, setScheduleAt] = useState<string | null>(null)
 
   const create = useCreateDocument()
   const save = useSaveDocument()
@@ -200,6 +228,7 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
   const load = useCallback(
     (view: DocumentView) => {
       form.reset(convert.current.fromData(view.data) as FieldValues)
+      setScheduleAt(view.scheduledAt)
       setResetKey((key) => key + 1)
       setLoadedId(view.id)
       setConflict(false)
@@ -409,71 +438,79 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
     )
   }
 
-  const context: EditorContext = { locale, resetKey, doc, form }
+  const context: EditorContext = {
+    locale,
+    resetKey,
+    doc,
+    form,
+    schedule: { at: scheduleAt, set: setScheduleAt, canPublish },
+  }
   const status = doc?.status
-  const publishLabel = !doc
-    ? 'Опубликовать'
-    : status === 'changed' || (doc.isLive && isDirty)
-      ? 'Опубликовать изменения'
-      : doc.isLive
-        ? 'Опубликовано'
-        : 'Опубликовать'
+  const scheduling = Boolean(scheduleAt) && !publishOnSave
+  const publishLabel = scheduling
+    ? 'Запланировать'
+    : !doc
+      ? 'Опубликовать'
+      : status === 'changed' || (doc.isLive && isDirty)
+        ? 'Обновить'
+        : doc.isLive
+          ? 'Опубликовано'
+          : 'Опубликовать'
+  const heading = props.heading
+    ? doc
+      ? props.heading.edit
+      : props.heading.create
+    : liveTitle?.trim() || doc?.title || props.newTitle
 
   return (
     <FormProvider {...form}>
       <form
-        className="space-y-6"
         onSubmit={(event) => {
           event.preventDefault()
           void onSave()
         }}
         noValidate
       >
-        <header className="space-y-3">
-          {(props.showBack ?? !singleton) ? (
-            <Link
-              to={props.list.path}
-              className="inline-flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              {props.list.label}
-            </Link>
-          ) : null}
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 space-y-1.5">
-              <h1 className="font-semibold text-2xl tracking-tight [overflow-wrap:anywhere]">
-                {liveTitle?.trim() || doc?.title || props.newTitle}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-sm">
-                {status && !publishOnSave ? <StatusBadge status={status} /> : null}
-                {doc?.scheduledAt ? <span>выйдет {formatDateTime(doc.scheduledAt)}</span> : null}
-                {doc ? (
-                  <span>
-                    Изменено {formatDateTime(doc.updatedAt)}
-                    {doc.updatedBy ? ` · ${doc.updatedBy.name}` : ''}
-                  </span>
-                ) : (
-                  <span>Ещё не сохранено</span>
-                )}
-                {isDirty ? (
-                  <span className="text-amber-700 dark:text-amber-300">
-                    Есть несохранённые правки
-                  </span>
-                ) : null}
-                {doc?.liveUrl ? (
-                  <a
-                    href={doc.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-primary hover:underline"
-                  >
-                    Открыть на сайте
-                    <ExternalLink className="size-3.5" aria-hidden="true" />
-                  </a>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
+        {/* The action bar stays on top while the form scrolls, across the content area. */}
+        <header className="sticky top-0 z-10 -mx-4 -mt-8 mb-6 border-b bg-background/92 backdrop-blur-md sm:-mx-8 max-md:top-14">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-8">
+            {(props.showBack ?? !singleton) ? (
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Link to={props.list.path} aria-label={`Назад: ${props.list.label}`}>
+                  <ArrowLeft aria-hidden="true" />
+                  Назад
+                </Link>
+              </Button>
+            ) : null}
+            <h1 className="min-w-0 truncate font-semibold text-[15px]">{heading}</h1>
+            {status && !publishOnSave ? <StatusBadge status={status} /> : null}
+            <span className="text-muted-foreground text-xs">
+              {isDirty ? (
+                <span className="text-amber-700 dark:text-amber-300">
+                  Есть несохранённые правки
+                </span>
+              ) : doc?.scheduledAt ? (
+                `Выйдет ${formatDateTime(doc.scheduledAt)}`
+              ) : doc ? (
+                <span title={doc.updatedBy ? `Изменил(а) ${doc.updatedBy.name}` : undefined}>
+                  Сохранено {savedAt(doc.updatedAt)}
+                </span>
+              ) : (
+                'Ещё не сохранено'
+              )}
+            </span>
+            {doc?.liveUrl ? (
+              <a
+                href={doc.liveUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-primary text-xs hover:underline"
+              >
+                Открыть
+                <ExternalLink className="size-3" aria-hidden="true" />
+              </a>
+            ) : null}
+            <div className="ml-auto flex flex-wrap items-center gap-2">
               {doc?.previewLocales.length || (!doc && !singleton) ? (
                 <Button
                   type="button"
@@ -486,9 +523,15 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
                 </Button>
               ) : null}
               {doc ? (
-                <Button type="button" variant="outline" onClick={() => setDialog('history')}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label="История версий"
+                  title="История версий"
+                  onClick={() => setDialog('history')}
+                >
                   <History aria-hidden="true" />
-                  История
                 </Button>
               ) : null}
               {doc && ((canPublish && !publishOnSave) || (canWrite && !singleton)) ? (
@@ -541,15 +584,22 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
                 variant={publishOnSave || !canPublish ? 'default' : 'outline'}
                 disabled={!canWrite || busy || (Boolean(doc) && !isDirty)}
               >
-                {save.isPending || create.isPending ? 'Сохраняем…' : 'Сохранить'}
+                {save.isPending || create.isPending
+                  ? 'Сохраняем…'
+                  : publishOnSave || doc?.isLive
+                    ? 'Сохранить'
+                    : 'Сохранить черновик'}
               </Button>
               {canPublish && !publishOnSave ? (
                 <Button
                   type="button"
-                  onClick={onPublish}
-                  disabled={busy || (Boolean(doc?.isLive) && status !== 'changed' && !isDirty)}
+                  onClick={scheduling && scheduleAt ? () => onSchedule(scheduleAt) : onPublish}
+                  disabled={
+                    busy ||
+                    (!scheduling && Boolean(doc?.isLive) && status !== 'changed' && !isDirty)
+                  }
                 >
-                  {publish.isPending ? 'Публикуем…' : publishLabel}
+                  {publish.isPending || schedule.isPending ? 'Публикуем…' : publishLabel}
                 </Button>
               ) : null}
             </div>
@@ -557,7 +607,7 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
         </header>
 
         {conflict ? (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="mb-6">
             <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
               Пока вы редактировали, документ сохранил другой пользователь. Загрузите его версию,
               чтобы не затереть чужие правки (ваши несохранённые правки пропадут).
@@ -574,35 +624,45 @@ export function DocumentEditor<T extends FieldValues>(props: DocumentEditorProps
             props.renderSidebar && 'lg:grid-cols-[minmax(0,1fr)_340px]',
           )}
         >
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-4">
             {renderLocale ? (
-              <Card className="gap-0 overflow-hidden py-0">
-                <Tabs value={locale} onValueChange={(value) => setLocale(value as Locale)}>
+              <Tabs
+                value={locale}
+                onValueChange={(value) => setLocale(value as Locale)}
+                className="gap-4"
+              >
+                <div className="flex flex-wrap items-center gap-3">
                   <LocaleTabsList
                     hasLocale={props.hasLocale ?? (() => false)}
                     uzbekRequired={uzbekFirst && (props.uzbekRequired ?? true)}
                   />
-                  {LOCALES.map((item) => (
-                    <TabsContent key={item} value={item} className="space-y-5 p-5">
-                      {uzbekFirst && item !== 'uz' ? (
-                        <p className="text-muted-foreground text-xs">
-                          Необязательно. Пустое поле на сайте покажется на узбекском.
-                        </p>
-                      ) : null}
-                      {item === locale ? (
-                        <div key={resetKey} className="space-y-5">
+                  {uzbekFirst && locale !== 'uz' ? (
+                    <span className="text-muted-foreground text-xs">
+                      Необязательно: пустое поле на сайте покажется на узбекском.
+                    </span>
+                  ) : null}
+                </div>
+                {LOCALES.map((item) => (
+                  <TabsContent key={item} value={item}>
+                    {item === locale ? (
+                      props.bareLocale ? (
+                        <div key={resetKey} className="space-y-4">
                           {renderLocale(context)}
                         </div>
-                      ) : null}
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              </Card>
+                      ) : (
+                        <Card key={resetKey} className="space-y-5 p-6">
+                          {renderLocale(context)}
+                        </Card>
+                      )
+                    ) : null}
+                  </TabsContent>
+                ))}
+              </Tabs>
             ) : null}
             {props.renderShared ? <div key={resetKey}>{props.renderShared(context)}</div> : null}
           </div>
           {props.renderSidebar ? (
-            <aside key={resetKey} className="space-y-6">
+            <aside key={resetKey} className="space-y-4">
               {props.renderSidebar(context)}
             </aside>
           ) : null}

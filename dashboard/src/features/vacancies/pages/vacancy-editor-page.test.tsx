@@ -57,7 +57,7 @@ describe('VacancyEditorPage', () => {
     expect(screen.queryByRole('button', { name: 'Добавить требование' })).not.toBeInTheDocument()
     await user.type(screen.getByRole('textbox', { name: 'Требования: 1' }), 'React')
     await user.type(screen.getByRole('textbox', { name: 'Требования: 3' }), 'TypeScript')
-    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    await user.click(screen.getByRole('button', { name: /^Сохранить/ }))
 
     await waitFor(() =>
       expect(sentBody(fetchMock, 'POST admin/content')).toMatchObject({
